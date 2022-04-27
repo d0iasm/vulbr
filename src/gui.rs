@@ -1,5 +1,9 @@
-use alloc::string::String;
+//use gtk::prelude::*;
+//use gtk::{Application, ApplicationWindow};
+//use gtk4 as gtk;
+//use std::string::String;
 
+/*
 pub struct ApplicationWindow {
     width: u64,
     height: u64,
@@ -139,3 +143,4 @@ impl ApplicationWindow {
         self.buffer.flush();
     }
 }
+*/

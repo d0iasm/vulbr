@@ -1,15 +1,13 @@
 //! This is a part of "13.2.6 Tree construction" in the HTML spec.
 //! https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
 
-use crate::alloc::string::ToString;
 use crate::renderer::html::token::{HtmlToken, HtmlTokenizer};
 use crate::renderer::html::Attribute;
-use alloc::rc::{Rc, Weak};
-use alloc::string::String;
-use alloc::vec::Vec;
 use core::cell::RefCell;
-#[allow(unused_imports)]
-use liumlib::*;
+use std::rc::{Rc, Weak};
+use std::string::String;
+use std::string::ToString;
+use std::vec::Vec;
 
 #[derive(Debug, Clone)]
 /// https://dom.spec.whatwg.org/#interface-node

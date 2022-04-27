@@ -4,12 +4,11 @@
 //! 5. Parsing
 //! https://www.w3.org/TR/css-syntax-3/#tokenization
 
-use crate::alloc::string::ToString;
 use crate::renderer::css::token::*;
-use alloc::string::String;
-use alloc::vec::Vec;
-#[allow(unused_imports)]
-use liumlib::*;
+
+use std::string::String;
+use std::string::ToString;
+use std::vec::Vec;
 
 // e.g.
 // div {

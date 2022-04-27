@@ -1,19 +1,14 @@
 //! https://www.w3.org/TR/css-box-3/
 //! https://www.w3.org/TR/css-layout-api-1/
 
-use crate::alloc::string::ToString;
-use crate::gui::ApplicationWindow;
 use crate::renderer::css::cssom::*;
 use crate::renderer::html::dom::*;
 use crate::renderer::{Element, NodeKind};
-use alloc::rc::{Rc, Weak};
-use alloc::string::String;
-use alloc::vec::Vec;
 use core::cell::RefCell;
-use liumlib::gui::draw_rect;
-use liumlib::gui::BitmapImageBuffer;
-#[allow(unused_imports)]
-use liumlib::*;
+use std::rc::{Rc, Weak};
+use std::string::String;
+use std::string::ToString;
+use std::vec::Vec;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
@@ -242,7 +237,7 @@ impl RenderObject {
         }
     }
 
-    fn paint(&self, window: &ApplicationWindow) {
+    fn paint(&self) {
         match &self.kind {
             NodeKind::Document => {}
             NodeKind::Element(element) => {
@@ -262,6 +257,7 @@ impl RenderObject {
                     ElementKind::Li => {}
                     // TODO: support <div>
                     ElementKind::Div => {
+                        /*
                         draw_rect(
                             &window.buffer,
                             self.style.background_color,
@@ -272,6 +268,7 @@ impl RenderObject {
                         )
                         .expect("draw a div");
                         window.buffer.flush();
+                        */
                     }
                 }
             }
@@ -410,6 +407,7 @@ impl RenderTree {
         self.layout_node(&self.root, &fake_style, &fake_position);
     }
 
+    /*
     fn paint_node(&self, window: &ApplicationWindow, node: &Option<Rc<RefCell<RenderObject>>>) {
         match node {
             Some(n) => {
@@ -426,4 +424,5 @@ impl RenderTree {
     pub fn paint(&self, window: &ApplicationWindow) {
         self.paint_node(window, &self.root);
     }
+    */
 }

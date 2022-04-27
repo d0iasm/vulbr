@@ -1,23 +1,21 @@
 pub mod css;
 pub mod html;
-pub mod js;
+//pub mod js;
 pub mod layout;
 
-use crate::gui::ApplicationWindow;
 use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::*;
 use crate::renderer::html::dom::*;
 use crate::renderer::html::token::*;
 use crate::renderer::layout::render_tree::*;
-use alloc::rc::Rc;
-use alloc::string::String;
 use core::cell::RefCell;
-use liumlib::*;
-use saji::ast::Parser;
-use saji::runtime::Runtime;
-use saji::token::Lexer;
+use std::rc::Rc;
+use std::string::String;
+//use saji::ast::Parser;
+//use saji::runtime::Runtime;
+//use saji::token::Lexer;
 
-pub fn render(html: String, window: &ApplicationWindow) {
+pub fn render(html: String) {
     //println!("Input HTML:\n{}", html);
     //println!("----------------------");
 
@@ -38,25 +36,25 @@ pub fn render(html: String, window: &ApplicationWindow) {
 
     // js
     let js = get_js_content(dom_root.clone());
-    let lexer = Lexer::new(js);
+    //let lexer = Lexer::new(js);
     //println!("JS lexer {:?}", lexer);
 
-    let mut parser = Parser::new(lexer);
-    let ast = parser.parse_ast();
+    //let mut parser = Parser::new(lexer);
+    //let ast = parser.parse_ast();
     //println!("JS ast {:?}", ast);
 
-    let mut runtime = Runtime::new();
-    runtime.execute(&ast);
+    //let mut runtime = Runtime::new();
+    //runtime.execute(&ast);
 
     // apply css to html and create RenderTree
-    let render_tree = RenderTree::new(dom_root, &cssom);
+    //let render_tree = RenderTree::new(dom_root, &cssom);
 
-    println!("----------------------");
-    println!("Render Tree:");
-    print_render_object(&render_tree.root, 0);
-    println!("----------------------");
+    //println!("----------------------");
+    //println!("Render Tree:");
+    //print_render_object(&render_tree.root, 0);
+    //println!("----------------------");
 
-    render_tree.paint(window);
+    //render_tree.paint(window);
 }
 
 fn print_dom(node: &Option<Rc<RefCell<Node>>>, depth: usize) {

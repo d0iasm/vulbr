@@ -1,7 +1,7 @@
 pub mod dom;
 pub mod token;
 
-use alloc::string::String;
+use std::string::String;
 
 /// Used in HTML token and DOM.
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -4,10 +4,8 @@
 //! 4. Tokenization
 //! https://www.w3.org/TR/css-syntax-3/#tokenization
 
-use alloc::string::String;
-use alloc::vec::Vec;
-#[allow(unused_imports)]
-use liumlib::*;
+use std::string::String;
+use std::vec::Vec;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// https://www.w3.org/TR/css-syntax-3/#consume-token

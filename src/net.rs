@@ -41,6 +41,7 @@ fn htons(port: u16) -> u16 {
     }
 }
 
+/*
 pub fn udp_response(parsed_url: &ParsedUrl) -> String {
     let http_request = HttpRequest::new(Method::Get, parsed_url);
 
@@ -75,3 +76,4 @@ pub fn udp_response(parsed_url: &ParsedUrl) -> String {
         Err(e) => panic!("failed to convert u8 array to string: {}", e),
     }
 }
+*/
