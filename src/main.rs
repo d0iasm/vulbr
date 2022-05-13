@@ -1,3 +1,4 @@
+mod browser;
 mod default_page;
 mod gui;
 mod http;
@@ -6,11 +7,9 @@ mod renderer;
 mod url;
 
 use crate::default_page::DEFAULT_PAGE;
-use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow};
-use gtk4 as gtk;
 use std::string::ToString;
 //use crate::net::udp_response;
+use crate::browser::Browser;
 use crate::renderer::render;
 use crate::url::ParsedUrl;
 
@@ -45,28 +44,13 @@ fn main() {
         }
     }
 
-    let app = Application::builder()
-        .application_id("org.example.HelloWorld")
-        .build();
-    app.connect_activate(|app| {
-        // We create the main window.
-        let window = ApplicationWindow::builder()
-            .application(app)
-            .default_width(320)
-            .default_height(200)
-            .title("Hello, World!")
-            .build();
+    let browser = Browser::new();
+    browser.run();
 
-        // Show the window.
-        window.show();
-    });
-
-    app.run();
-
+    /*
     if default {
         render(DEFAULT_PAGE.to_string());
     } else {
-        /*
         let parsed_url = ParsedUrl::new(url.to_string());
         println!("parsed_url: {:?}", parsed_url);
 
@@ -75,6 +59,6 @@ fn main() {
         println!("{}", response);
 
         render(response, &app);
-        */
     }
+        */
 }
