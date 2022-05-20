@@ -1,37 +1,28 @@
+mod browser_window;
+
+use browser_window::Window;
 use glib::clone;
 use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::{
-    Align, Application, ApplicationWindow, Box, HeaderBar, Label, Orientation, SearchBar,
-    SearchEntry, ToggleButton,
+    Align, Application, Box, HeaderBar, Label, Orientation, SearchBar, SearchEntry, ToggleButton,
 };
 
-pub struct Browser {
-    app: Application,
-    url: Option<String>,
-}
+pub fn init_browser_window() {
+    // Create a new application
+    let app = Application::builder()
+        .application_id("org.gtk-rs.example")
+        .build();
 
-impl Browser {
-    pub fn new() -> Self {
-        Self {
-            app: Application::builder().application_id("vulbr").build(),
-            url: None,
-        }
-    }
+    // Connect to "activate" signal of `app`
+    app.connect_activate(build_ui);
 
-    pub fn url(&self) -> Option<String> {
-        self.url.clone()
-    }
-
-    pub fn run(&self) {
-        self.app.connect_activate(build_ui);
-
-        self.app.run();
-    }
+    // Run the application
+    app.run();
 }
 
 fn build_ui(app: &Application) {
-    let window = ApplicationWindow::new(app);
+    let window = Window::new(app);
     window.set_default_size(1280, 800);
     window.set_title(Some("vulbr"));
 
@@ -90,3 +81,31 @@ fn build_ui(app: &Application) {
 
     window.show();
 }
+
+/*
+fn build_ui(app: &Application) {
+    // Create a window
+    let window = Window::new(app);
+
+    // ANCHOR: button
+    // Create a button
+    let button = Button::builder()
+        .label("Press me!")
+        .margin_top(12)
+        .margin_bottom(12)
+        .margin_start(12)
+        .margin_end(12)
+        .build();
+    // ANCHOR_END: button
+
+    // Connect to "clicked" signal of `button`
+    button.connect_clicked(move |button| {
+        // Set the label to "Hello World!" after the button has been clicked on
+        button.set_label("Hello World!");
+    });
+
+    // Add button
+    window.set_child(Some(&button));
+    window.present();
+}
+*/

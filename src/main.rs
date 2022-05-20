@@ -11,8 +11,10 @@ use crate::renderer::render;
 use crate::url::ParsedUrl;
 
 fn main() {
-    let browser = Browser::new();
-    browser.run();
+    //let browser = Browser::new();
+    //browser.run();
+
+    gui::init_browser_window();
 
     /*
     let parsed_url = ParsedUrl::new(url.to_string());

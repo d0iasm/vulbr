@@ -1,8 +1,9 @@
 [package]
 authors = ["d0iasm"]
-name = "br"
+name = "vulbr"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 gtk4 = "0.4.7"
+gio = "0.15.11"
