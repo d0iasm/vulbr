@@ -1,6 +1,6 @@
 mod browser_window;
 
-use browser_window::Window;
+use browser_window::BrowserWindow;
 use glib::clone;
 use gtk4::glib;
 use gtk4::prelude::*;
@@ -22,7 +22,7 @@ pub fn init_browser_window() {
 }
 
 fn build_ui(app: &Application) {
-    let window = Window::new(app);
+    let window = BrowserWindow::new(app);
     window.set_default_size(1280, 800);
     window.set_title(Some("vulbr"));
 

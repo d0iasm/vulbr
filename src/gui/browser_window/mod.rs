@@ -8,28 +8,22 @@ use gtk4::{gio, glib};
 
 // ANCHOR: mod
 glib::wrapper! {
-    pub struct Window(ObjectSubclass<imp::Window>)
+    pub struct BrowserWindow(ObjectSubclass<imp::BrowserWindow>)
         @extends gtk4::ApplicationWindow, gtk4::Window, gtk4::Widget,
         @implements gio::ActionGroup, gio::ActionMap, gtk4::Accessible, gtk4::Buildable,
                     gtk4::ConstraintTarget, gtk4::Native, gtk4::Root, gtk4::ShortcutManager;
 }
 
-impl Window {
+impl BrowserWindow {
     pub fn new(app: &Application) -> Self {
-        // Create new window
-        Object::new(&[("application", app)]).expect("Failed to create `Window`.")
-    }
-
-    pub fn save_window_size(&mut self) -> Result<(), glib::BoolError> {
-        //self.imp().url.set_url("example.com".to_string());
-        self.imp().url = Some("example.com".to_string());
-        Ok(())
-    }
-
-    fn load_window_size(&self) {
-        //let settings = &self.imp().settings;
-
-        self.set_default_size(800i32, 1024i32);
+        Object::new(&[("application", app)]).expect("Failed to create `BrowserWindow`.")
     }
 }
-// ANCHOR_END: mod
+
+/*
+impl BrowserWindow {
+    pub fn new(number: i32) -> Self {
+        Object::new(&[("number", &number)]).expect("Failed to create `BrowserWindow`.")
+    }
+}
+*/
