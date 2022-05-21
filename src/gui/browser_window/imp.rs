@@ -44,6 +44,7 @@ impl ObjectImpl for BrowserWindow {
     }
 
     fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
+        println!("set_property");
         match pspec.name() {
             "url" => {
                 let input = value
@@ -53,6 +54,7 @@ impl ObjectImpl for BrowserWindow {
             }
             _ => unimplemented!(),
         }
+        println!("set_property {}", self.url.borrow());
     }
 
     fn property(&self, _obj: &Self::Type, _id: usize, pspec: &ParamSpec) -> Value {

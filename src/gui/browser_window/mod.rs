@@ -1,8 +1,6 @@
 mod imp;
 
 use glib::Object;
-use gtk4::prelude::*;
-use gtk4::subclass::prelude::*;
 use gtk4::Application;
 use gtk4::{gio, glib};
 

@@ -1,21 +1,35 @@
 mod browser_window;
 
 use browser_window::BrowserWindow;
+use gio::SimpleAction;
 use glib::clone;
-use gtk4::glib;
+use glib::closure_local;
 use gtk4::prelude::*;
+use gtk4::{gio, glib};
 use gtk4::{
     Align, Application, Box, HeaderBar, Label, Orientation, SearchBar, SearchEntry, ToggleButton,
 };
 
 pub fn init_browser_window() {
-    // Create a new application
     let app = Application::builder().application_id("vulbr").build();
 
-    // Connect to "activate" signal of `app`
     app.connect_activate(build_ui);
 
-    // Run the application
+    /*
+    app.connect_closure(
+        "clicked",
+        false,
+        closure_local!(move |_button: i32| { println!("Clicked!") }),
+    );
+    */
+    /*
+    let action_close = SimpleAction::new("close", None);
+    action_close.connect_activate(clone!(@weak window => move |_, _| {
+    window.close();
+        }));
+    window.add_action(&action_close);
+    */
+
     app.run();
 }
 
@@ -61,15 +75,12 @@ fn build_ui(app: &Application) {
 
     container.append(&label);
 
-    entry.connect_search_started(clone!(@weak search_button => move |_| {
-        search_button.set_active(true);
-    }));
-
-    entry.connect_stop_search(clone!(@weak search_button => move |_| {
-        search_button.set_active(false);
+    entry.connect_activate(clone!(@weak label, @weak window => move |entry| {
+        window.set_property("url", entry.text());
     }));
 
     entry.connect_search_changed(clone!(@weak label => move |entry| {
+        println!("entry.connect_search_changed {:?}", entry.text());
         if entry.text() != "" {
             label.set_text(&entry.text());
         } else {
