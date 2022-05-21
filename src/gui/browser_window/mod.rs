@@ -20,10 +20,9 @@ impl Window {
         Object::new(&[("application", app)]).expect("Failed to create `Window`.")
     }
 
-    pub fn save_window_size(&self) -> Result<(), glib::BoolError> {
-        //let url = &mut self.imp().url;
-
-        //url.set_url("example.com".to_string());
+    pub fn save_window_size(&mut self) -> Result<(), glib::BoolError> {
+        //self.imp().url.set_url("example.com".to_string());
+        self.imp().url = Some("example.com".to_string());
         Ok(())
     }
 

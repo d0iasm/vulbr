@@ -1,4 +1,3 @@
-mod browser;
 mod default_page;
 mod gui;
 mod http;
@@ -6,7 +5,6 @@ mod net;
 mod renderer;
 mod url;
 
-use crate::browser::Browser;
 use crate::renderer::render;
 use crate::url::ParsedUrl;
 

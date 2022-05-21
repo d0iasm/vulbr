@@ -1,7 +1,6 @@
-use gio::Settings;
-use glib::signal::Inhibit;
 use gtk4::{gio, glib};
 use gtk4::{subclass::prelude::*, ApplicationWindow};
+use std::cell::Cell;
 
 pub struct Url {
     url: Option<String>,
@@ -22,35 +21,55 @@ impl Url {
 }
 
 pub struct Window {
-    pub url: Url,
+    //pub url: mut Url,
+    //pub url: Option<String>,
+    pub url: Cell<String>,
 }
 
 #[glib::object_subclass]
 impl ObjectSubclass for Window {
-    const NAME: &'static str = "MyGtkAppWindow";
+    const NAME: &'static str = "MyGtkAppIntegerObject";
     type Type = super::Window;
-    type ParentType = ApplicationWindow;
-
-    fn new() -> Self {
-        Self { url: Url::new() }
-    }
 }
+
+// Trait shared by all GObjects
 impl ObjectImpl for Window {
-    fn constructed(&self, obj: &Self::Type) {
-        self.parent_constructed(obj);
-        // Load latest window state
-        obj.load_window_size();
+    fn properties() -> &'static [ParamSpec] {
+        static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
+            vec![ParamSpecInt::new(
+                // Name
+                "number",
+                // Nickname
+                "number",
+                // Short description
+                "number",
+                // Minimum value
+                i32::MIN,
+                // Maximum value
+                i32::MAX,
+                // Default value
+                0,
+                // The property can be read and written to
+                ParamFlags::READWRITE,
+            )]
+        });
+        PROPERTIES.as_ref()
     }
-}
-impl WidgetImpl for Window {}
-impl WindowImpl for Window {
-    // Save window state right before the window will be closed
-    fn close_request(&self, obj: &Self::Type) -> Inhibit {
-        // Save window size
-        obj.save_window_size().expect("Failed to save window state");
 
-        // Don't inhibit the default handler
-        Inhibit(false)
+    fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
+        match pspec.name() {
+            "number" => {
+                let input_number = value.get().expect("The value needs to be of type `i32`.");
+                self.number.replace(input_number);
+            }
+            _ => unimplemented!(),
+        }
+    }
+
+    fn property(&self, _obj: &Self::Type, _id: usize, pspec: &ParamSpec) -> Value {
+        match pspec.name() {
+            "number" => self.number.get().to_value(),
+            _ => unimplemented!(),
+        }
     }
 }
-impl ApplicationWindowImpl for Window {}
