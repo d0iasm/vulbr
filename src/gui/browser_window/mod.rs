@@ -6,7 +6,6 @@ use gtk4::subclass::prelude::*;
 use gtk4::Application;
 use gtk4::{gio, glib};
 
-// ANCHOR: mod
 glib::wrapper! {
     pub struct BrowserWindow(ObjectSubclass<imp::BrowserWindow>)
         @extends gtk4::ApplicationWindow, gtk4::Window, gtk4::Widget,
@@ -19,11 +18,3 @@ impl BrowserWindow {
         Object::new(&[("application", app)]).expect("Failed to create `BrowserWindow`.")
     }
 }
-
-/*
-impl BrowserWindow {
-    pub fn new(number: i32) -> Self {
-        Object::new(&[("number", &number)]).expect("Failed to create `BrowserWindow`.")
-    }
-}
-*/

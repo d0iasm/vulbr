@@ -4,11 +4,11 @@ use gtk4::prelude::*;
 use gtk4::subclass::prelude::*;
 use gtk4::ApplicationWindow;
 use once_cell::sync::Lazy;
-use std::cell::Cell;
+use std::cell::RefCell;
 
 #[derive(Default)]
 pub struct BrowserWindow {
-    url: Cell<i32>,
+    url: RefCell<String>,
 }
 
 #[glib::object_subclass]
@@ -18,12 +18,12 @@ impl ObjectSubclass for BrowserWindow {
     type ParentType = ApplicationWindow;
 
     fn new() -> Self {
-        Self { url: Cell::new(0) }
+        Self {
+            url: RefCell::new("".to_string()),
+        }
     }
 }
 
-// ANCHOR: object_impl
-// Trait shared by all GObjects
 impl ObjectImpl for BrowserWindow {
     fn properties() -> &'static [ParamSpec] {
         static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
@@ -57,7 +57,7 @@ impl ObjectImpl for BrowserWindow {
 
     fn property(&self, _obj: &Self::Type, _id: usize, pspec: &ParamSpec) -> Value {
         match pspec.name() {
-            "url" => self.url.get().to_value(),
+            "url" => self.url.borrow().to_value(),
             _ => unimplemented!(),
         }
     }
