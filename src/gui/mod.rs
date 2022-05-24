@@ -1,10 +1,8 @@
 mod browser_window;
 
 use browser_window::BrowserWindow;
-use gio::SimpleAction;
 use glib::clone;
 use glib::closure_local;
-use glib::subclass::Signal;
 use gtk4::glib::value::ToValue;
 use gtk4::prelude::*;
 use gtk4::{gio, glib};
@@ -12,32 +10,25 @@ use gtk4::{
     Align, Application, Box, HeaderBar, Label, Orientation, SearchBar, SearchEntry, ToggleButton,
 };
 
-pub fn start_browser_window() -> Application {
-    let app = Application::builder().application_id("vulbr").build();
+pub fn start_browser_window(handle_url: fn(String) -> i32) {
+    let application = Application::builder().application_id("vulbr").build();
 
-    app.connect_activate(build_ui);
-
-    /*
-    app.connect_closure(
-        "clicked",
-        false,
-        closure_local!(move |_button: i32| { println!("Clicked!") }),
+    application.connect_startup(
+        clone!(@strong application, @strong handle_url => move |app| {
+            let window = build_ui(app);
+            window.connect_closure(
+                "signal-test",
+                false,
+                closure_local!(move |_w: BrowserWindow, _number: i32| {
+                    println!("get a signal !!!!!!!!!!! {}", handle_url("test".to_string()));
+                }),
+            );
+        }),
     );
-    */
-    /*
-    let action_close = SimpleAction::new("close", None);
-    action_close.connect_activate(clone!(@weak window => move |_, _| {
-    window.close();
-        }));
-    window.add_action(&action_close);
-    */
-
-    app.run();
-
-    app
+    application.run();
 }
 
-fn build_ui(app: &Application) {
+fn build_ui(app: &Application) -> BrowserWindow {
     let window = BrowserWindow::new(app);
     window.set_default_size(1280, 800);
     window.set_title(Some("vulbr"));
@@ -86,22 +77,7 @@ fn build_ui(app: &Application) {
         window.emit_by_name::<()>("signal-test", &[&n]);
     }));
 
-    entry.connect_search_changed(clone!(@weak label => move |entry| {
-        println!("entry.connect_search_changed {:?}", entry.text());
-        if entry.text() != "" {
-            label.set_text(&entry.text());
-        } else {
-            label.set_text("Type to start search");
-        }
-    }));
-
-    window.connect_closure(
-        "signal-test",
-        false,
-        closure_local!(move |_w: BrowserWindow, number: i32| {
-            println!("get a signal !!!!!!!!!!! {}", number);
-        }),
-    );
-
     window.show();
+
+    window
 }

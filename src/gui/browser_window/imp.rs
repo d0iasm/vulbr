@@ -56,7 +56,7 @@ impl ObjectImpl for BrowserWindow {
         PROPERTIES.as_ref()
     }
 
-    fn set_property(&self, obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
+    fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
         println!("set_property");
         match pspec.name() {
             "url" => {
@@ -64,8 +64,6 @@ impl ObjectImpl for BrowserWindow {
                     .get()
                     .expect("The value needs to be of type `String`.");
                 self.url.replace(input);
-                //let n = 42.to_value();
-                //obj.emit_by_name::<()>("signal-test", &[&n]);
             }
             _ => unimplemented!(),
         }
