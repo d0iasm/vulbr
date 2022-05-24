@@ -1,3 +1,4 @@
+use glib::subclass::Signal;
 use glib::{ParamFlags, ParamSpec, ParamSpecString, Value};
 use gtk4::glib;
 use gtk4::prelude::*;
@@ -25,6 +26,18 @@ impl ObjectSubclass for BrowserWindow {
 }
 
 impl ObjectImpl for BrowserWindow {
+    fn signals() -> &'static [Signal] {
+        static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
+            vec![Signal::builder(
+                "signal-test",
+                &[i32::static_type().into()],
+                <()>::static_type().into(),
+            )
+            .build()]
+        });
+        SIGNALS.as_ref()
+    }
+
     fn properties() -> &'static [ParamSpec] {
         static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
             vec![ParamSpecString::new(
@@ -33,7 +46,7 @@ impl ObjectImpl for BrowserWindow {
                 // Nickname
                 "url",
                 // Short description
-                "url",
+                "url that a user types. This is updated when an enter key is pressed.",
                 // Default value
                 None,
                 // The property can be read and written to
@@ -43,7 +56,7 @@ impl ObjectImpl for BrowserWindow {
         PROPERTIES.as_ref()
     }
 
-    fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
+    fn set_property(&self, obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
         println!("set_property");
         match pspec.name() {
             "url" => {
@@ -51,6 +64,8 @@ impl ObjectImpl for BrowserWindow {
                     .get()
                     .expect("The value needs to be of type `String`.");
                 self.url.replace(input);
+                //let n = 42.to_value();
+                //obj.emit_by_name::<()>("signal-test", &[&n]);
             }
             _ => unimplemented!(),
         }

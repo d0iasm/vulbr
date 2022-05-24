@@ -4,13 +4,15 @@ use browser_window::BrowserWindow;
 use gio::SimpleAction;
 use glib::clone;
 use glib::closure_local;
+use glib::subclass::Signal;
+use gtk4::glib::value::ToValue;
 use gtk4::prelude::*;
 use gtk4::{gio, glib};
 use gtk4::{
     Align, Application, Box, HeaderBar, Label, Orientation, SearchBar, SearchEntry, ToggleButton,
 };
 
-pub fn init_browser_window() {
+pub fn start_browser_window() -> Application {
     let app = Application::builder().application_id("vulbr").build();
 
     app.connect_activate(build_ui);
@@ -31,6 +33,8 @@ pub fn init_browser_window() {
     */
 
     app.run();
+
+    app
 }
 
 fn build_ui(app: &Application) {
@@ -76,7 +80,10 @@ fn build_ui(app: &Application) {
     container.append(&label);
 
     entry.connect_activate(clone!(@weak label, @weak window => move |entry| {
+        println!("connect_activate");
         window.set_property("url", entry.text());
+        let n = 42.to_value();
+        window.emit_by_name::<()>("signal-test", &[&n]);
     }));
 
     entry.connect_search_changed(clone!(@weak label => move |entry| {
@@ -87,6 +94,14 @@ fn build_ui(app: &Application) {
             label.set_text("Type to start search");
         }
     }));
+
+    window.connect_closure(
+        "signal-test",
+        false,
+        closure_local!(move |_w: BrowserWindow, number: i32| {
+            println!("get a signal !!!!!!!!!!! {}", number);
+        }),
+    );
 
     window.show();
 }
