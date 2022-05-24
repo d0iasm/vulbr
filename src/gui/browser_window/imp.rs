@@ -30,7 +30,7 @@ impl ObjectImpl for BrowserWindow {
         static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
             vec![Signal::builder(
                 "signal-test",
-                &[i32::static_type().into()],
+                &[String::static_type().into()],
                 <()>::static_type().into(),
             )
             .build()]

@@ -10,17 +10,18 @@ use gtk4::{
     Align, Application, Box, HeaderBar, Label, Orientation, SearchBar, SearchEntry, ToggleButton,
 };
 
-pub fn start_browser_window(handle_url: fn(String) -> i32) {
+pub fn start_browser_window(handle_url: fn(String)) {
     let application = Application::builder().application_id("vulbr").build();
 
-    application.connect_startup(
+    application.connect_activate(
         clone!(@strong application, @strong handle_url => move |app| {
             let window = build_ui(app);
             window.connect_closure(
                 "signal-test",
                 false,
-                closure_local!(move |_w: BrowserWindow, _number: i32| {
-                    println!("get a signal !!!!!!!!!!! {}", handle_url("test".to_string()));
+                closure_local!(move |_w: BrowserWindow, url: String| {
+                    println!("input url: {}", url);
+                    handle_url(url);
                 }),
             );
         }),
@@ -73,8 +74,7 @@ fn build_ui(app: &Application) -> BrowserWindow {
     entry.connect_activate(clone!(@weak label, @weak window => move |entry| {
         println!("connect_activate");
         window.set_property("url", entry.text());
-        let n = 42.to_value();
-        window.emit_by_name::<()>("signal-test", &[&n]);
+        window.emit_by_name::<()>("signal-test", &[&entry.text().to_value()]);
     }));
 
     window.show();

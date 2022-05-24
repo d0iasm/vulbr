@@ -8,9 +8,8 @@ mod url;
 use crate::renderer::render;
 use crate::url::ParsedUrl;
 
-fn handle_url(url: String) -> i32 {
-    println!("url: {}", url);
-    42
+fn handle_url(url: String) {
+    println!("handle_url : {}", url);
 }
 
 fn main() {
