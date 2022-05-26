@@ -80,3 +80,14 @@ impl HttpRequest {
         request
     }
 }
+
+#[derive(Debug)]
+pub struct HttpResponse {
+    body: String,
+}
+
+impl HttpResponse {
+    pub fn new(body: String) -> Self {
+        Self { body }
+    }
+}
