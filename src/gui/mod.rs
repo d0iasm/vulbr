@@ -8,11 +8,11 @@ use gtk4::{
     Align, Application, Box, HeaderBar, Label, Orientation, SearchBar, SearchEntry, ToggleButton,
 };
 
-pub fn start_browser_window(handle_url: fn(String) -> String) {
+pub fn start_browser_window(handle_input: fn(String) -> String) {
     let application = Application::builder().application_id("vulbr").build();
 
     application.connect_activate(
-        clone!(@strong application, @strong handle_url => move |app| {
+        clone!(@strong application, @strong handle_input => move |app| {
             let window = BrowserWindow::new(app);
             window.set_default_size(1280, 800);
             window.set_title(Some("vulbr"));
@@ -56,8 +56,8 @@ pub fn start_browser_window(handle_url: fn(String) -> String) {
 
             entry.connect_activate(clone!(@weak label, @weak window => move |entry| {
                 println!("connect_activate");
-                let parsed_url = handle_url(entry.text().to_string());
-                label.set_label(&parsed_url);
+                let result = handle_input(entry.text().to_string());
+                label.set_label(&result.split_at(100).0);
             }));
 
             window.show();

@@ -8,7 +8,7 @@ use crate::http::{HttpRequest, Method};
 use crate::net::http;
 use crate::url::ParsedUrl;
 
-fn handle_url(url: String) -> String {
+fn handle_input(url: String) -> String {
     println!("handle_url : {}", url);
 
     let parsed_url = ParsedUrl::new(url.to_string());
@@ -24,10 +24,5 @@ fn handle_url(url: String) -> String {
 }
 
 fn main() {
-    gui::start_browser_window(handle_url);
-
-    /*
-    let response = udp_response(&parsed_url);
-    render(response, &app);
-    */
+    gui::start_browser_window(handle_input);
 }

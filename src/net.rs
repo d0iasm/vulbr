@@ -1,13 +1,18 @@
 use crate::http::{HttpRequest, HttpResponse};
 use std::io::prelude::*;
+use std::io::Read;
 use std::net::TcpStream;
 
-pub fn http(_request: HttpRequest) -> std::io::Result<HttpResponse> {
+pub fn http(request: HttpRequest) -> std::io::Result<HttpResponse> {
     let mut stream = TcpStream::connect("127.0.0.1:8888")?;
 
-    stream.write(&[1])?;
-    let mut buf = [0; 128];
-    stream.read(&mut buf)?;
+    stream.write(&request.string().as_bytes())?;
+
+    let mut buf = String::new();
+    match stream.read_to_string(&mut buf) {
+        Ok(n) => println!("read {} bytes", n),
+        Err(e) => panic!("encountered IO error: {e}"),
+    };
 
     println!("{:#?}", buf);
 
