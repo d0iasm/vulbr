@@ -55,10 +55,8 @@ pub fn start_browser_window(handle_input: fn(String) -> String) {
             container.append(&label);
 
             entry.connect_activate(clone!(@weak label, @weak window => move |entry| {
-                println!("connect_activate");
-                let output = handle_input(entry.text().to_string());
-                println!("output {:?}", output);
-                label.set_label(&output);
+                let result = handle_input(entry.text().to_string());
+                label.set_label(&result);
             }));
 
             window.show();

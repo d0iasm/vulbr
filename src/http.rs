@@ -83,12 +83,36 @@ impl HttpRequest {
 
 #[derive(Debug)]
 pub struct HttpResponse {
+    version: String,
+    status_code: u8,
+    reason: String,
+    headers: String,
     body: String,
 }
 
 impl HttpResponse {
-    pub fn new(body: String) -> Self {
-        Self { body }
+    pub fn new(raw_response: String) -> Self {
+        let preprocessed_response = raw_response.replace("\n\r", "\n");
+
+        let (status_line, remaining) = match preprocessed_response.split_once("\n") {
+            Some((s, r)) => (s, r),
+            None => panic!("http response doesn't have a new line"),
+        };
+
+        let (headers, body) = match remaining.split_once("\n\n") {
+            Some((h, b)) => (h, b),
+            None => ("", remaining),
+        };
+
+        let statuses: Vec<&str> = status_line.split(" ").collect();
+
+        Self {
+            version: statuses[0].to_string(),
+            status_code: statuses[1].parse().expect("failed to parse status code"),
+            reason: statuses[2].to_string(),
+            headers: headers.to_string(),
+            body: body.to_string(),
+        }
     }
 
     pub fn body(&self) -> String {
