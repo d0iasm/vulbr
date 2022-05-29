@@ -6,6 +6,7 @@ mod url;
 
 use crate::http::{HttpRequest, Method};
 use crate::net::http;
+use crate::renderer::render;
 use crate::url::ParsedUrl;
 
 fn handle_input(url: String) -> String {
@@ -21,6 +22,8 @@ fn handle_input(url: String) -> String {
     };
 
     println!("response: {:?}", response.body());
+
+    render(response.body());
 
     response.body()
 }

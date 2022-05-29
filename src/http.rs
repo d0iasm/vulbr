@@ -84,7 +84,7 @@ impl HttpRequest {
 #[derive(Debug)]
 pub struct HttpResponse {
     version: String,
-    status_code: u8,
+    status_code: u32,
     reason: String,
     headers: String,
     body: String,
@@ -108,7 +108,10 @@ impl HttpResponse {
 
         Self {
             version: statuses[0].to_string(),
-            status_code: statuses[1].parse().expect("failed to parse status code"),
+            status_code: match statuses[1].parse() {
+                Ok(s) => s,
+                Err(_) => 404,
+            },
             reason: statuses[2].to_string(),
             headers: headers.to_string(),
             body: body.to_string(),

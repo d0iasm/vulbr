@@ -1,24 +1,21 @@
 pub mod css;
 pub mod html;
-//pub mod js;
+pub mod js;
 pub mod layout;
 
 use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::*;
 use crate::renderer::html::dom::*;
 use crate::renderer::html::token::*;
+use crate::renderer::js::ast::JsParser;
+use crate::renderer::js::runtime::JsRuntime;
+use crate::renderer::js::token::JsLexer;
 use crate::renderer::layout::render_tree::*;
 use core::cell::RefCell;
 use std::rc::Rc;
 use std::string::String;
-//use saji::ast::Parser;
-//use saji::runtime::Runtime;
-//use saji::token::Lexer;
 
 pub fn render(html: String) {
-    //println!("Input HTML:\n{}", html);
-    //println!("----------------------");
-
     // html
     let html_tokenizer = HtmlTokenizer::new(html);
     let dom_root = HtmlParser::new(html_tokenizer).construct_tree();
@@ -31,30 +28,28 @@ pub fn render(html: String) {
     let css_tokenizer = CssTokenizer::new(style);
     let cssom = CssParser::new(css_tokenizer).parse_stylesheet();
 
-    //println!("CSSOM:\n{:?}", cssom);
-    //println!("----------------------");
+    println!("CSSOM:\n{:?}", cssom);
+    println!("----------------------");
 
     // js
     let js = get_js_content(dom_root.clone());
-    //let lexer = Lexer::new(js);
-    //println!("JS lexer {:?}", lexer);
+    let lexer = JsLexer::new(js);
+    println!("JS lexer {:?}", lexer);
 
-    //let mut parser = Parser::new(lexer);
-    //let ast = parser.parse_ast();
-    //println!("JS ast {:?}", ast);
+    let mut parser = JsParser::new(lexer);
+    let ast = parser.parse_ast();
+    println!("JS ast {:?}", ast);
 
-    //let mut runtime = Runtime::new();
-    //runtime.execute(&ast);
+    let mut runtime = JsRuntime::new();
+    runtime.execute(&ast);
 
     // apply css to html and create RenderTree
-    //let render_tree = RenderTree::new(dom_root, &cssom);
+    let render_tree = RenderTree::new(dom_root, &cssom);
 
-    //println!("----------------------");
-    //println!("Render Tree:");
-    //print_render_object(&render_tree.root, 0);
-    //println!("----------------------");
-
-    //render_tree.paint(window);
+    println!("----------------------");
+    println!("Render Tree:");
+    print_render_object(&render_tree.root, 0);
+    println!("----------------------");
 }
 
 fn print_dom(node: &Option<Rc<RefCell<Node>>>, depth: usize) {
