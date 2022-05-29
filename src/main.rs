@@ -20,7 +20,9 @@ fn handle_input(url: String) -> String {
         Err(e) => panic!("failed to get http response: {:?}", e),
     };
 
-    format!("{:?}", response)
+    println!("response: {:?}", response.body());
+
+    response.body()
 }
 
 fn main() {

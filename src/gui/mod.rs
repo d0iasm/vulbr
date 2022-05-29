@@ -46,18 +46,19 @@ pub fn start_browser_window(handle_input: fn(String) -> String) {
 
             let label = Label::builder()
                 .label("Welcome to VulBr!")
+                .wrap(true)
                 .vexpand(true)
                 .halign(Align::Center)
                 .valign(Align::Center)
-                .css_classes(vec!["large-title".to_string()])
                 .build();
 
             container.append(&label);
 
             entry.connect_activate(clone!(@weak label, @weak window => move |entry| {
                 println!("connect_activate");
-                let result = handle_input(entry.text().to_string());
-                label.set_label(&result.split_at(100).0);
+                let output = handle_input(entry.text().to_string());
+                println!("output {:?}", output);
+                label.set_label(&output);
             }));
 
             window.show();

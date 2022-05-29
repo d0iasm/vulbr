@@ -9,12 +9,7 @@ pub fn http(request: HttpRequest) -> std::io::Result<HttpResponse> {
     stream.write(&request.string().as_bytes())?;
 
     let mut buf = String::new();
-    match stream.read_to_string(&mut buf) {
-        Ok(n) => println!("read {} bytes", n),
-        Err(e) => panic!("encountered IO error: {e}"),
-    };
+    stream.read_to_string(&mut buf)?;
 
-    println!("{:#?}", buf);
-
-    Ok(HttpResponse::new(format!("{:#?}", buf)))
+    Ok(HttpResponse::new(buf))
 }

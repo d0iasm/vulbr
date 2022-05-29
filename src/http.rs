@@ -90,4 +90,8 @@ impl HttpResponse {
     pub fn new(body: String) -> Self {
         Self { body }
     }
+
+    pub fn body(&self) -> String {
+        self.body.clone()
+    }
 }
