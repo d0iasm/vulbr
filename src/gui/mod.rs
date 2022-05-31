@@ -1,14 +1,71 @@
 mod browser_window;
 
+use crate::renderer::html::dom::{ElementKind, NodeKind};
+use crate::renderer::layout::render_tree::{RenderObject, RenderTree};
 use browser_window::BrowserWindow;
+use core::cell::RefCell;
 use glib::clone;
 use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::{
     Align, Application, Box, HeaderBar, Label, Orientation, SearchBar, SearchEntry, ToggleButton,
 };
+use std::rc::Rc;
 
-pub fn start_browser_window(handle_input: fn(String) -> String) {
+fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
+    match &node.borrow().kind {
+        NodeKind::Document => {}
+        NodeKind::Element(element) => match element.kind {
+            ElementKind::Html
+            | ElementKind::Head
+            | ElementKind::Style
+            | ElementKind::Script
+            | ElementKind::Body => {}
+            ElementKind::Link => {}
+            ElementKind::Text => {}
+            ElementKind::Ul => {}
+            ElementKind::Li => {}
+            ElementKind::Div => {
+                println!(
+                    "div !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1 {:?}",
+                    node.borrow().style.to_string()
+                );
+                let div = Box::builder()
+                    .css_classes(node.borrow().style.to_string())
+                    .build();
+                content_area.append(&div);
+            }
+        },
+        NodeKind::Text(text) => {
+            let label = Label::builder()
+                .label(text)
+                .wrap(true)
+                .vexpand(true)
+                .halign(Align::Center)
+                .valign(Align::Center)
+                .build();
+
+            content_area.append(&label);
+        }
+    }
+}
+
+fn paint_dom(node: &Option<Rc<RefCell<RenderObject>>>, content_area: &Box) {
+    match node {
+        Some(n) => {
+            println!("{:?} {:?}", n.borrow().kind, n.borrow().style);
+            paint_dom_node(n, &content_area);
+
+            let child_content_area = Box::new(Orientation::Vertical, 0);
+            content_area.append(&child_content_area);
+            paint_dom(&n.borrow().first_child(), &child_content_area);
+            paint_dom(&n.borrow().next_sibling(), content_area);
+        }
+        None => return,
+    }
+}
+
+pub fn start_browser_window(handle_input: fn(String) -> RenderTree) {
     let application = Application::builder().application_id("vulbr").build();
 
     application.connect_activate(
@@ -55,8 +112,11 @@ pub fn start_browser_window(handle_input: fn(String) -> String) {
             container.append(&label);
 
             entry.connect_activate(clone!(@weak label, @weak window => move |entry| {
-                let result = handle_input(entry.text().to_string());
-                label.set_label(&result);
+                container.remove(&label);
+
+                let render_tree = handle_input(entry.text().to_string());
+                paint_dom(&render_tree.root, &container);
+                //label.set_label(&entry.text().to_string());
             }));
 
             window.show();

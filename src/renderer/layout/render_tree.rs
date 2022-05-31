@@ -3,7 +3,6 @@
 
 use crate::renderer::css::cssom::*;
 use crate::renderer::html::dom::*;
-use crate::renderer::{Element, NodeKind};
 use core::cell::RefCell;
 use std::rc::{Rc, Weak};
 use std::string::String;
@@ -30,7 +29,7 @@ impl RenderStyle {
     pub fn new(node: &Rc<RefCell<Node>>) -> Self {
         Self {
             background_color: 0xffffff, // white
-            color: 0xffffff,            // white
+            color: 0x000000,            // black
             display: Self::display_type(node),
             text_align: "left".to_string(),
             width: 0,
@@ -53,6 +52,15 @@ impl RenderStyle {
             },
             _ => DisplayType::Inline,
         }
+    }
+
+    pub fn to_string(&self) -> Vec<String> {
+        let mut s = Vec::new();
+        s.push(format!("background-color: {}", self.background_color));
+        s.push(format!("color: {}", self.color));
+        s.push(format!("height: {}", self.height));
+        s.push(format!("width: {}", self.width));
+        s
     }
 }
 
@@ -237,44 +245,46 @@ impl RenderObject {
         }
     }
 
-    fn paint(&self) {
-        match &self.kind {
-            NodeKind::Document => {}
-            NodeKind::Element(element) => {
-                match element.kind {
-                    ElementKind::Html
-                    | ElementKind::Head
-                    | ElementKind::Style
-                    | ElementKind::Script
-                    | ElementKind::Body => {}
-                    // TODO: support <a>
-                    ElementKind::Link => {}
-                    // TODO: support raw text
-                    ElementKind::Text => {}
-                    // TODO: support <ul>
-                    ElementKind::Ul => {}
-                    // TODO: support <li>
-                    ElementKind::Li => {}
-                    // TODO: support <div>
-                    ElementKind::Div => {
-                        /*
-                        draw_rect(
-                            &window.buffer,
-                            self.style.background_color,
-                            window.content_x + self.position.x as i64,
-                            window.content_y + self.position.y as i64,
-                            self.style.width as i64,
-                            self.style.height as i64,
-                        )
-                        .expect("draw a div");
-                        window.buffer.flush();
-                        */
+    /*
+        fn paint(&self) {
+            match &self.kind {
+                NodeKind::Document => {}
+                NodeKind::Element(element) => {
+                    match element.kind {
+                        ElementKind::Html
+                        | ElementKind::Head
+                        | ElementKind::Style
+                        | ElementKind::Script
+                        | ElementKind::Body => {}
+                        // TODO: support <a>
+                        ElementKind::Link => {}
+                        // TODO: support raw text
+                        ElementKind::Text => {}
+                        // TODO: support <ul>
+                        ElementKind::Ul => {}
+                        // TODO: support <li>
+                        ElementKind::Li => {}
+                        // TODO: support <div>
+                        ElementKind::Div => {
+                            /*
+                            draw_rect(
+                                &window.buffer,
+                                self.style.background_color,
+                                window.content_x + self.position.x as i64,
+                                window.content_y + self.position.y as i64,
+                                self.style.width as i64,
+                                self.style.height as i64,
+                            )
+                            .expect("draw a div");
+                            window.buffer.flush();
+                            */
+                        }
                     }
                 }
+                NodeKind::Text(_text) => {}
             }
-            NodeKind::Text(_text) => {}
         }
-    }
+    */
 }
 
 #[derive(Debug, Clone)]

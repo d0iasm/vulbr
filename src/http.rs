@@ -1,7 +1,9 @@
+use crate::url::ParsedUrl;
+use std::io::prelude::*;
+use std::io::Read;
+use std::net::TcpStream;
 use std::string::String;
 use std::vec::Vec;
-
-use crate::url::ParsedUrl;
 
 #[derive(Debug)]
 pub enum Method {
@@ -38,6 +40,7 @@ pub struct HttpRequest {
 }
 
 impl HttpRequest {
+    // TODO: remove `method` and add get()/post()/put() etc. functions instead.
     pub fn new(method: Method, url: &ParsedUrl) -> Self {
         let mut req = Self {
             method,
@@ -79,6 +82,17 @@ impl HttpRequest {
 
         request
     }
+
+    pub fn get(&self) -> std::io::Result<HttpResponse> {
+        let mut stream = TcpStream::connect("127.0.0.1:8888")?;
+
+        stream.write(&self.string().as_bytes())?;
+
+        let mut buf = String::new();
+        stream.read_to_string(&mut buf)?;
+
+        Ok(HttpResponse::new(buf))
+    }
 }
 
 #[derive(Debug)]
@@ -86,6 +100,7 @@ pub struct HttpResponse {
     version: String,
     status_code: u32,
     reason: String,
+    // TODO: replace String with Vec<Header>.
     headers: String,
     body: String,
 }
