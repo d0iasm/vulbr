@@ -4,11 +4,13 @@ use crate::renderer::html::dom::{ElementKind, NodeKind};
 use crate::renderer::layout::render_tree::{RenderObject, RenderTree};
 use browser_window::BrowserWindow;
 use core::cell::RefCell;
+use gdk4::Display;
 use glib::clone;
 use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::{
-    Align, Application, Box, HeaderBar, Label, Orientation, SearchBar, SearchEntry, ToggleButton,
+    render_background, Align, Application, Box, CssProvider, HeaderBar, Label, Orientation,
+    SearchBar, SearchEntry, StyleContext, ToggleButton,
 };
 use std::rc::Rc;
 
@@ -27,12 +29,42 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             ElementKind::Li => {}
             ElementKind::Div => {
                 println!(
-                    "div !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1 {:?}",
-                    node.borrow().style.to_string()
+                    "div !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1{:?}",
+                    node.borrow().style
                 );
                 let div = Box::builder()
-                    .css_classes(node.borrow().style.to_string())
+                    .height_request(node.borrow().style.height() as i32)
+                    .width_request(node.borrow().style.width() as i32)
+                    .margin_start(node.borrow().style.margin_left() as i32)
+                    .margin_top(node.borrow().style.margin_top() as i32)
+                    .margin_end(node.borrow().style.margin_right() as i32)
+                    .margin_bottom(node.borrow().style.margin_bottom() as i32)
                     .build();
+                /*
+                let div = Label::builder()
+                    .height_request(node.borrow().style.height as i32)
+                    .width_request(node.borrow().style.width as i32)
+                    .build();
+                */
+                for attr in &element.attributes {
+                    if attr.name == "id" {
+                        div.set_widget_name(&attr.value);
+                    }
+                    if attr.name == "class" {
+                        div.add_css_class(&attr.value);
+                    }
+                }
+                /*
+                render_background(
+                    &div,
+                    &div.pango_context(),
+                    0f64,
+                    0f64,
+                    0f64,
+                    0f64, //node.borrow().style.width as f64,
+                          //node.borrow().style.height as f64,
+                );
+                */
                 content_area.append(&div);
             }
         },
@@ -40,9 +72,7 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             let label = Label::builder()
                 .label(text)
                 .wrap(true)
-                .vexpand(true)
-                .halign(Align::Center)
-                .valign(Align::Center)
+                .css_classes(node.borrow().style.to_string())
                 .build();
 
             content_area.append(&label);
@@ -116,7 +146,8 @@ pub fn start_browser_window(handle_input: fn(String) -> RenderTree) {
 
                 let render_tree = handle_input(entry.text().to_string());
                 paint_dom(&render_tree.root, &container);
-                //label.set_label(&entry.text().to_string());
+
+                &Display::default().expect("Could not connect to a display."),
             }));
 
             window.show();

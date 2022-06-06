@@ -12,8 +12,8 @@ use std::vec::Vec;
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct RenderStyle {
-    background_color: u32,
-    color: u32,
+    background_color: String,
+    color: String,
     display: DisplayType,
     text_align: String,
     // TODO: support string (e.g. "auto")
@@ -28,8 +28,8 @@ pub struct RenderStyle {
 impl RenderStyle {
     pub fn new(node: &Rc<RefCell<Node>>) -> Self {
         Self {
-            background_color: 0xffffff, // white
-            color: 0x000000,            // black
+            background_color: "white".to_string(),
+            color: "black".to_string(),
             display: Self::display_type(node),
             text_align: "left".to_string(),
             width: 0,
@@ -54,8 +54,49 @@ impl RenderStyle {
         }
     }
 
+    pub fn height(&self) -> u64 {
+        self.height
+    }
+
+    pub fn width(&self) -> u64 {
+        self.height
+    }
+
+    pub fn margin_top(&self) -> u64 {
+        self.margin.top
+    }
+
+    pub fn margin_left(&self) -> u64 {
+        self.margin.left
+    }
+
+    pub fn margin_right(&self) -> u64 {
+        self.margin.right
+    }
+
+    pub fn margin_bottom(&self) -> u64 {
+        self.margin.right
+    }
+
+    pub fn padding_top(&self) -> u64 {
+        self.padding.top
+    }
+
+    pub fn padding_left(&self) -> u64 {
+        self.padding.left
+    }
+
+    pub fn padding_right(&self) -> u64 {
+        self.padding.right
+    }
+
+    pub fn padding_bottom(&self) -> u64 {
+        self.padding.right
+    }
+
     pub fn to_string(&self) -> Vec<String> {
         let mut s = Vec::new();
+        // for debug
         s.push(format!("background-color: {}", self.background_color));
         s.push(format!("color: {}", self.color));
         s.push(format!("height: {}", self.height));
@@ -140,21 +181,20 @@ impl RenderObject {
         for declaration in declarations {
             match declaration.property.as_str() {
                 "background-color" => {
-                    self.style.background_color = match declaration.value {
-                        ComponentValue::Keyword(value) => match value.as_str() {
-                            "red" => 0xff0000,
-                            "orange" => 0xffa500,
-                            "yellow" => 0xffff00,
-                            "green" => 0x008000,
-                            "blue" => 0x0000ff,
-                            "purple" => 0x800080,
-                            "pink" => 0xffc0cb,
-                            "lightgray" => 0xd3d3d3,
-                            "gray" => 0x808080,
-                            "black" => 0x000000,
-                            _ => 0xffffff,
-                        },
-                        _ => 0xffffff,
+                    self.style.background_color =
+                        if let ComponentValue::Keyword(value) = declaration.value {
+                            value
+                        } else {
+                            // default value
+                            "whilte".to_string()
+                        };
+                }
+                "color" => {
+                    self.style.color = if let ComponentValue::Keyword(value) = declaration.value {
+                        value
+                    } else {
+                        // default value
+                        "black".to_string()
                     };
                 }
                 "height" => {
