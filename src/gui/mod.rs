@@ -1,6 +1,6 @@
 mod browser_window;
 
-use crate::renderer::html::dom::{ElementKind, NodeKind};
+use crate::renderer::html::dom::{get_style_content, ElementKind, NodeKind};
 use crate::renderer::layout::render_tree::{RenderObject, RenderTree};
 use browser_window::BrowserWindow;
 use core::cell::RefCell;
@@ -9,8 +9,8 @@ use glib::clone;
 use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::{
-    render_background, Align, Application, Box, CssProvider, HeaderBar, Label, Orientation,
-    SearchBar, SearchEntry, StyleContext, ToggleButton,
+    render_background, Align, Application, Box, Button, CssProvider, DrawingArea, HeaderBar, Label,
+    Orientation, PrintContext, SearchBar, SearchEntry, StyleContext, ToggleButton,
 };
 use std::rc::Rc;
 
@@ -32,7 +32,38 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                     "div !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1{:?}",
                     node.borrow().style
                 );
+                let div = DrawingArea::builder()
+                    .content_height(node.borrow().style.height() as i32)
+                    .content_width(node.borrow().style.width() as i32)
+                    .margin_start(node.borrow().style.margin_left() as i32)
+                    .margin_top(node.borrow().style.margin_top() as i32)
+                    .margin_end(node.borrow().style.margin_right() as i32)
+                    .margin_bottom(node.borrow().style.margin_bottom() as i32)
+                    .build();
+                div.set_draw_func(|gtk_drawing_area, cairo_context, width, height| {
+                    cairo_context.arc(
+                        (width / 2) as f64,
+                        (height / 2) as f64,
+                        (height / 2) as f64,
+                        0f64,
+                        2.0 * 3.14,
+                    );
+                    cairo_context.set_source_rgb(255f64, 0f64, 0f64);
+                    cairo_context.fill();
+                });
+
+                /*
+                drawing_area.connect_draw(move |widget, context| {
+                    //let a = context;
+                    //context.set_source_pixbuf(&ws.pix, 0f64, 0f64);
+                    //context.stroke();
+                    //return Inhibit(false);
+                });
+                */
+                /*
                 let div = Box::builder()
+                    .css_name("div")
+                    .name("div")
                     .height_request(node.borrow().style.height() as i32)
                     .width_request(node.borrow().style.width() as i32)
                     .margin_start(node.borrow().style.margin_left() as i32)
@@ -40,6 +71,7 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                     .margin_end(node.borrow().style.margin_right() as i32)
                     .margin_bottom(node.borrow().style.margin_bottom() as i32)
                     .build();
+                */
                 /*
                 let div = Label::builder()
                     .height_request(node.borrow().style.height as i32)
@@ -69,6 +101,7 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             }
         },
         NodeKind::Text(text) => {
+            /*
             let label = Label::builder()
                 .label(text)
                 .wrap(true)
@@ -76,6 +109,7 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                 .build();
 
             content_area.append(&label);
+            */
         }
     }
 }
@@ -146,8 +180,6 @@ pub fn start_browser_window(handle_input: fn(String) -> RenderTree) {
 
                 let render_tree = handle_input(entry.text().to_string());
                 paint_dom(&render_tree.root, &container);
-
-                &Display::default().expect("Could not connect to a display."),
             }));
 
             window.show();
