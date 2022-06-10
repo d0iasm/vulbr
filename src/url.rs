@@ -8,12 +8,14 @@ use std::vec::Vec;
 #[derive(Debug)]
 enum Protocol {
     Http,
+    Https,
 }
 
 impl Protocol {
     fn to_string(&self) -> String {
         match self {
             Protocol::Http => String::from("http"),
+            Protocol::Https => String::from("https"),
         }
     }
 }
@@ -31,6 +33,8 @@ impl ParsedUrl {
         let splitted_url: Vec<&str> = url.split("://").collect();
         if splitted_url.len() == 2 && splitted_url[0] == Protocol::Http.to_string() {
             Protocol::Http
+        } else if splitted_url.len() == 2 && splitted_url[0] == Protocol::Https.to_string() {
+            Protocol::Https
         } else if splitted_url.len() == 1 {
             // No scheme. Set "HTTP" as a default behavior.
             Protocol::Http
@@ -39,7 +43,7 @@ impl ParsedUrl {
         }
     }
 
-    fn remove_scheme(url: &String, scheme: Protocol) -> String {
+    fn remove_scheme(url: &String, scheme: &Protocol) -> String {
         // Remove "scheme://" from url if any.
         url.replacen(&(scheme.to_string() + "://"), "", 1)
     }
@@ -71,7 +75,7 @@ impl ParsedUrl {
 
     pub fn new(original_url: String) -> Self {
         let scheme = Self::extract_scheme(&original_url);
-        let url = Self::remove_scheme(&original_url, scheme);
+        let url = Self::remove_scheme(&original_url, &scheme);
 
         let host = Self::extract_host(&url);
         let path = Self::extract_path(&url);
@@ -79,7 +83,7 @@ impl ParsedUrl {
         let port = Self::extract_port(&host);
 
         Self {
-            scheme: Protocol::Http,
+            scheme,
             host,
             port,
             path,
