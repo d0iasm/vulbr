@@ -14,8 +14,8 @@ use crate::renderer::js::token::JsLexer;
 use crate::renderer::layout::render_tree::*;
 use crate::url::ParsedUrl;
 use core::cell::RefCell;
-use gdk4::Display;
-use gtk4::{CssProvider, StyleContext};
+//use gdk4::Display;
+//use gtk4::{CssProvider, StyleContext};
 use std::rc::Rc;
 use std::string::String;
 
@@ -45,12 +45,12 @@ fn print_render_object(node: &Option<Rc<RefCell<RenderObject>>>, depth: usize) {
     }
 }
 
+/*
 // TODO: replace load_css with gtk4::render_background (?)
 fn load_css(css: &[u8]) {
     // Load the CSS file and add it to the provider
     let provider = CssProvider::new();
     provider.load_from_data(css);
-    println!("&&&&&&&&&&&&&&&&&&&&&&&&& {:?}", provider.to_str());
 
     // Add the provider to the default screen
     StyleContext::add_provider_for_display(
@@ -59,6 +59,7 @@ fn load_css(css: &[u8]) {
         gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
     );
 }
+*/
 
 fn handle_input(url: String) -> RenderTree {
     println!("handle_url : {}", url);
@@ -86,7 +87,7 @@ fn handle_input(url: String) -> RenderTree {
 
     // css
     let style = get_style_content(dom_root.clone());
-    load_css(style.as_bytes());
+    //load_css(style.as_bytes());
     let css_tokenizer = CssTokenizer::new(style);
     let cssom = CssParser::new(css_tokenizer).parse_stylesheet();
 

@@ -29,7 +29,6 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             ElementKind::Div => {
                 let width = node.borrow().style.width();
                 let height = node.borrow().style.height();
-                let bg_rgb = node.borrow().style.background_color();
                 let div = DrawingArea::builder()
                     .content_height(height as i32)
                     .content_width(width as i32)
@@ -38,8 +37,19 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                     .margin_end(node.borrow().style.margin_right() as i32)
                     .margin_bottom(node.borrow().style.margin_bottom() as i32)
                     .build();
+
+                let bg_rgb = node.borrow().style.background_color();
+                let padding_top = node.borrow().style.padding_top();
+                let padding_right = node.borrow().style.padding_right();
+                let padding_bottom = node.borrow().style.padding_bottom();
+                let padding_left = node.borrow().style.padding_left();
                 div.set_draw_func(move |_drawing_area, cairo_context, _w, _h| {
-                    cairo_context.rectangle(0f64, 0f64, width as f64, height as f64);
+                    cairo_context.rectangle(
+                        padding_left as f64,
+                        padding_top as f64,
+                        (width - padding_right) as f64,
+                        (height - padding_bottom) as f64,
+                    );
                     cairo_context.set_source_rgb(bg_rgb.r, bg_rgb.g, bg_rgb.b);
                     cairo_context.fill().expect("failed to fill out div");
                 });
@@ -57,15 +67,9 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             }
         },
         NodeKind::Text(text) => {
-            /*
-            let label = Label::builder()
-                .label(text)
-                .wrap(true)
-                .css_classes(node.borrow().style.to_string())
-                .build();
+            let label = Label::builder().label(text).wrap(true).build();
 
             content_area.append(&label);
-            */
         }
     }
 }
