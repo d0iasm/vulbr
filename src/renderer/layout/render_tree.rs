@@ -12,8 +12,8 @@ use std::vec::Vec;
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct RenderStyle {
-    background_color: String,
-    color: String,
+    background_color: RGB,
+    color: RGB,
     display: DisplayType,
     text_align: String,
     // TODO: support string (e.g. "auto")
@@ -28,8 +28,8 @@ pub struct RenderStyle {
 impl RenderStyle {
     pub fn new(node: &Rc<RefCell<Node>>) -> Self {
         Self {
-            background_color: "white".to_string(),
-            color: "black".to_string(),
+            background_color: RGB::new(0f64, 0f64, 0f64),
+            color: RGB::new(0f64, 0f64, 0f64),
             display: Self::display_type(node),
             text_align: "left".to_string(),
             width: 0,
@@ -54,12 +54,16 @@ impl RenderStyle {
         }
     }
 
+    pub fn background_color(&self) -> RGB {
+        self.background_color.clone()
+    }
+
     pub fn height(&self) -> u64 {
         self.height
     }
 
     pub fn width(&self) -> u64 {
-        self.height
+        self.width
     }
 
     pub fn margin_top(&self) -> u64 {
@@ -93,15 +97,44 @@ impl RenderStyle {
     pub fn padding_bottom(&self) -> u64 {
         self.padding.right
     }
+}
 
-    pub fn to_string(&self) -> Vec<String> {
-        let mut s = Vec::new();
-        // for debug
-        s.push(format!("background-color: {}", self.background_color));
-        s.push(format!("color: {}", self.color));
-        s.push(format!("height: {}", self.height));
-        s.push(format!("width: {}", self.width));
-        s
+#[derive(Debug, Copy, Clone)]
+pub struct RGB {
+    pub r: f64,
+    pub g: f64,
+    pub b: f64,
+}
+
+impl RGB {
+    fn new(r: f64, g: f64, b: f64) -> Self {
+        Self { r, g, b }
+    }
+
+    fn convert_color_name_to_rgb(color: &str) -> RGB {
+        // Currently, it supports basic colors and "orange" and "lightgrayc".
+        // https://www.w3.org/wiki/CSS/Properties/color/keywords
+        match color {
+            "black" => RGB::new(0f64, 0f64, 0f64),
+            "silver" => RGB::new(192f64, 192f64, 192f64),
+            "gray" => RGB::new(128f64, 128f64, 128f64),
+            "white" => RGB::new(255f64, 255f64, 255f64),
+            "maroon" => RGB::new(128f64, 0f64, 0f64),
+            "red" => RGB::new(255f64, 0f64, 0f64),
+            "purple" => RGB::new(128f64, 0f64, 128f64),
+            "fuchsia" => RGB::new(255f64, 0f64, 255f64),
+            "green" => RGB::new(0f64, 128f64, 0f64),
+            "lime" => RGB::new(0f64, 255f64, 0f64),
+            "olive" => RGB::new(128f64, 128f64, 0f64),
+            "yellow" => RGB::new(255f64, 255f64, 0f64),
+            "navy" => RGB::new(0f64, 0f64, 128f64),
+            "blue" => RGB::new(0f64, 0f64, 255f64),
+            "teal" => RGB::new(0f64, 128f64, 128f64),
+            "aqua" => RGB::new(0f64, 255f64, 255f64),
+            "orange" => RGB::new(255f64, 165f64, 0f64),
+            "lightgray" => RGB::new(211f64, 211f64, 211f64),
+            _ => panic!("unsupported color name {}", color),
+        }
     }
 }
 
@@ -181,21 +214,14 @@ impl RenderObject {
         for declaration in declarations {
             match declaration.property.as_str() {
                 "background-color" => {
-                    self.style.background_color =
-                        if let ComponentValue::Keyword(value) = declaration.value {
-                            value
-                        } else {
-                            // default value
-                            "whilte".to_string()
-                        };
+                    if let ComponentValue::Keyword(value) = declaration.value {
+                        self.style.background_color = RGB::convert_color_name_to_rgb(&value);
+                    }
                 }
                 "color" => {
-                    self.style.color = if let ComponentValue::Keyword(value) = declaration.value {
-                        value
-                    } else {
-                        // default value
-                        "black".to_string()
-                    };
+                    if let ComponentValue::Keyword(value) = declaration.value {
+                        self.style.color = RGB::convert_color_name_to_rgb(&value);
+                    }
                 }
                 "height" => {
                     self.style.height = match declaration.value {
