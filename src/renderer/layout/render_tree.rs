@@ -5,8 +5,6 @@ use crate::renderer::css::cssom::*;
 use crate::renderer::html::dom::*;
 use core::cell::RefCell;
 use std::rc::{Rc, Weak};
-use std::string::String;
-use std::string::ToString;
 use std::vec::Vec;
 
 #[allow(dead_code)]
@@ -15,14 +13,11 @@ pub struct RenderStyle {
     background_color: RGB,
     color: RGB,
     display: DisplayType,
-    text_align: String,
     // TODO: support string (e.g. "auto")
     height: u64,
     width: u64,
     margin: BoxInfo,
     padding: BoxInfo,
-    // witdh, style, color
-    border: (String, String, String),
 }
 
 impl RenderStyle {
@@ -30,24 +25,23 @@ impl RenderStyle {
         Self {
             background_color: RGB::new(0f64, 0f64, 0f64),
             color: RGB::new(0f64, 0f64, 0f64),
-            display: Self::display_type(node),
-            text_align: "left".to_string(),
+            display: Self::default_display_type(node),
             width: 0,
             height: 0,
             margin: BoxInfo::new(0, 0, 0, 0),
             padding: BoxInfo::new(0, 0, 0, 0),
-            border: (
-                "medium".to_string(),
-                "none".to_string(),
-                "color".to_string(),
-            ),
         }
     }
 
-    fn display_type(node: &Rc<RefCell<Node>>) -> DisplayType {
+    fn default_display_type(node: &Rc<RefCell<Node>>) -> DisplayType {
         match &node.borrow().kind {
             NodeKind::Element(element) => match element.kind {
-                ElementKind::Div | ElementKind::Ul | ElementKind::Li => DisplayType::Block,
+                ElementKind::Html | ElementKind::Div | ElementKind::Ul | ElementKind::Li => {
+                    DisplayType::Block
+                }
+                ElementKind::Script | ElementKind::Head | ElementKind::Style => {
+                    DisplayType::DisplayNone
+                }
                 _ => DisplayType::Inline,
             },
             _ => DisplayType::Inline,
@@ -60,6 +54,10 @@ impl RenderStyle {
 
     pub fn height(&self) -> u64 {
         self.height
+    }
+
+    pub fn display(&self) -> DisplayType {
+        self.display
     }
 
     pub fn width(&self) -> u64 {
@@ -138,10 +136,12 @@ impl RGB {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 enum DisplayType {
     Block,
     Inline,
+    /// https://www.w3.org/TR/css-display-3/#valdef-display-none
+    DisplayNone,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -290,6 +290,7 @@ impl RenderObject {
                         self.position.x = parent_position.x + parent_style.width;
                         self.position.y = parent_position.y;
                     }
+                    DisplayType::DisplayNone => {}
                 }
             }
             DisplayType::Block => {
@@ -306,51 +307,12 @@ impl RenderObject {
                         self.position.x = 0;
                         self.position.y = parent_style.height;
                     }
+                    DisplayType::DisplayNone => {}
                 }
             }
+            DisplayType::DisplayNone => {}
         }
     }
-
-    /*
-        fn paint(&self) {
-            match &self.kind {
-                NodeKind::Document => {}
-                NodeKind::Element(element) => {
-                    match element.kind {
-                        ElementKind::Html
-                        | ElementKind::Head
-                        | ElementKind::Style
-                        | ElementKind::Script
-                        | ElementKind::Body => {}
-                        // TODO: support <a>
-                        ElementKind::Link => {}
-                        // TODO: support raw text
-                        ElementKind::Text => {}
-                        // TODO: support <ul>
-                        ElementKind::Ul => {}
-                        // TODO: support <li>
-                        ElementKind::Li => {}
-                        // TODO: support <div>
-                        ElementKind::Div => {
-                            /*
-                            draw_rect(
-                                &window.buffer,
-                                self.style.background_color,
-                                window.content_x + self.position.x as i64,
-                                window.content_y + self.position.y as i64,
-                                self.style.width as i64,
-                                self.style.height as i64,
-                            )
-                            .expect("draw a div");
-                            window.buffer.flush();
-                            */
-                        }
-                    }
-                }
-                NodeKind::Text(_text) => {}
-            }
-        }
-    */
 }
 
 #[derive(Debug, Clone)]
@@ -482,23 +444,4 @@ impl RenderTree {
         let fake_position = LayoutPosition::new(0, 0);
         self.layout_node(&self.root, &fake_style, &fake_position);
     }
-
-    /*
-    fn paint_node(&self, window: &ApplicationWindow, node: &Option<Rc<RefCell<RenderObject>>>) {
-        match node {
-            Some(n) => {
-                n.borrow().paint(window);
-
-                self.paint_node(window, &n.borrow().first_child());
-                self.paint_node(window, &n.borrow().next_sibling());
-            }
-            None => return,
-        }
-    }
-
-    /// Paint the current RenderTree to ApplicationWindow.
-    pub fn paint(&self, window: &ApplicationWindow) {
-        self.paint_node(window, &self.root);
-    }
-    */
 }
