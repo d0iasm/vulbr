@@ -66,10 +66,10 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                 content_area.append(&div);
             }
         },
-        NodeKind::Text(text) => {
-            let label = Label::builder().label(text).wrap(true).build();
+        NodeKind::Text(_text) => {
+            //let label = Label::builder().label(text).wrap(true).build();
 
-            content_area.append(&label);
+            //content_area.append(&label);
         }
     }
 }

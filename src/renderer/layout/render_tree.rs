@@ -115,24 +115,24 @@ impl RGB {
         // Currently, it supports basic colors and "orange" and "lightgrayc".
         // https://www.w3.org/wiki/CSS/Properties/color/keywords
         match color {
-            "black" => RGB::new(0f64, 0f64, 0f64),
-            "silver" => RGB::new(192f64, 192f64, 192f64),
-            "gray" => RGB::new(128f64, 128f64, 128f64),
-            "white" => RGB::new(255f64, 255f64, 255f64),
-            "maroon" => RGB::new(128f64, 0f64, 0f64),
-            "red" => RGB::new(255f64, 0f64, 0f64),
-            "purple" => RGB::new(128f64, 0f64, 128f64),
-            "fuchsia" => RGB::new(255f64, 0f64, 255f64),
-            "green" => RGB::new(0f64, 128f64, 0f64),
-            "lime" => RGB::new(0f64, 255f64, 0f64),
-            "olive" => RGB::new(128f64, 128f64, 0f64),
-            "yellow" => RGB::new(255f64, 255f64, 0f64),
-            "navy" => RGB::new(0f64, 0f64, 128f64),
-            "blue" => RGB::new(0f64, 0f64, 255f64),
-            "teal" => RGB::new(0f64, 128f64, 128f64),
-            "aqua" => RGB::new(0f64, 255f64, 255f64),
-            "orange" => RGB::new(255f64, 165f64, 0f64),
-            "lightgray" => RGB::new(211f64, 211f64, 211f64),
+            "black" => RGB::new(0.0, 0.0, 0.0),           // #000000
+            "silver" => RGB::new(0.752, 0.752, 0.752),    // #c0c0c0
+            "gray" => RGB::new(0.501, 0.501, 0.501),      // #808080
+            "white" => RGB::new(1.0, 1.0, 1.0),           // #ffffff
+            "maroon" => RGB::new(0.501, 0.0, 0.0),        // #800000
+            "red" => RGB::new(1.0, 0.0, 0.0),             // #ff0000
+            "purple" => RGB::new(0.501, 0.0, 0.501),      // #800080
+            "fuchsia" => RGB::new(1.0, 0.0, 1.0),         // #ff00ff
+            "green" => RGB::new(0.0, 0.501, 0.0),         // #008000
+            "lime" => RGB::new(0.0, 1.0, 0.0),            // #00ff00
+            "olive" => RGB::new(0.501, 0.501, 0.0),       // #808000
+            "yellow" => RGB::new(1.0, 1.0, 0.0),          // #ffff00
+            "navy" => RGB::new(0.0, 0.0, 0.501),          // #000080
+            "blue" => RGB::new(0.0, 0.0, 1.0),            // #0000ff
+            "teal" => RGB::new(0.0, 0.501, 0.501),        // #008080
+            "aqua" => RGB::new(0.0, 1.0, 1.0),            // #00ffff
+            "orange" => RGB::new(1.0, 0.647, 0.0),        // #ffa500
+            "lightgray" => RGB::new(0.827, 0.827, 0.827), // #d3d3d3
             _ => panic!("unsupported color name {}", color),
         }
     }
