@@ -18,6 +18,13 @@ impl Protocol {
             Protocol::Https => String::from("https"),
         }
     }
+
+    fn default_port_number(&self) -> u16 {
+        match self {
+            Protocol::Http => 80,
+            Protocol::Https => 443,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -53,23 +60,21 @@ impl ParsedUrl {
         splitted_url[0].to_string()
     }
 
-    fn extract_path(url: &String) -> String {
+    fn extract_path(url: &String) -> Option<String> {
         let splitted_url: Vec<&str> = url.splitn(2, '/').collect();
         if splitted_url.len() == 2 {
-            splitted_url[1].to_string()
+            Some(splitted_url[1].to_string())
         } else {
-            // There is no path in URL so set an empty string as a default value.
-            String::from("")
+            None
         }
     }
 
-    fn extract_port(host: &String) -> u16 {
+    fn extract_port(host: &String) -> Option<u16> {
         let splitted_host: Vec<&str> = host.splitn(2, ':').collect();
         if splitted_host.len() == 2 {
-            splitted_host[1].parse::<u16>().unwrap()
+            Some(splitted_host[1].parse::<u16>().unwrap())
         } else {
-            // There is no port number in URL so set 8888 as a default value.
-            80
+            None
         }
     }
 
@@ -78,9 +83,15 @@ impl ParsedUrl {
         let url = Self::remove_scheme(&original_url, &scheme);
 
         let host = Self::extract_host(&url);
-        let path = Self::extract_path(&url);
+        let path = match Self::extract_path(&url) {
+            Some(p) => p,
+            None => String::new(),
+        };
 
-        let port = Self::extract_port(&host);
+        let port = match Self::extract_port(&host) {
+            Some(h) => h,
+            None => scheme.default_port_number(),
+        };
 
         Self {
             scheme,
