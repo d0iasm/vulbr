@@ -137,7 +137,7 @@ impl RGB {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-enum DisplayType {
+pub enum DisplayType {
     Block,
     Inline,
     /// https://www.w3.org/TR/css-display-3/#valdef-display-none
@@ -280,7 +280,7 @@ impl RenderObject {
     fn layout(&mut self, parent_style: &RenderStyle, parent_position: &LayoutPosition) {
         match parent_style.display {
             DisplayType::Inline => {
-                match self.style.display {
+                match self.style.display() {
                     DisplayType::Block => {
                         // TODO: set position property
                         self.position.x = self.style.margin.left;
@@ -294,7 +294,7 @@ impl RenderObject {
                 }
             }
             DisplayType::Block => {
-                match self.style.display {
+                match self.style.display() {
                     DisplayType::Block => {
                         self.position.x = self.style.margin.left;
                         self.position.y = parent_position.y
@@ -313,27 +313,9 @@ impl RenderObject {
             DisplayType::DisplayNone => {}
         }
     }
-}
 
-#[derive(Debug, Clone)]
-pub struct RenderTree {
-    pub root: Option<Rc<RefCell<RenderObject>>>,
-}
-
-impl RenderTree {
-    pub fn new(root: Rc<RefCell<Node>>, cssom: &StyleSheet) -> Self {
-        let mut tree = Self {
-            root: Self::dom_to_render_tree(&Some(root)),
-        };
-
-        tree.apply(cssom);
-        tree.layout();
-
-        tree
-    }
-
-    fn is_node_selected(&self, node_kind: &NodeKind, selector: &Selector) -> bool {
-        match node_kind {
+    fn is_node_selected(&self, selector: &Selector) -> bool {
+        match &self.kind {
             NodeKind::Element(e) => match selector {
                 Selector::TypeSelector(type_name) => {
                     if Element::element_kind_to_string(e.kind) == *type_name {
@@ -361,60 +343,130 @@ impl RenderTree {
             _ => false,
         }
     }
+}
 
-    fn dom_to_render_object(node: &Option<Rc<RefCell<Node>>>) -> Option<Rc<RefCell<RenderObject>>> {
+#[derive(Debug, Clone)]
+pub struct RenderTree {
+    pub root: Option<Rc<RefCell<RenderObject>>>,
+}
+
+impl RenderTree {
+    pub fn new(root: Rc<RefCell<Node>>, cssom: &StyleSheet) -> Self {
+        let mut tree = Self {
+            root: Self::create_render_tree(&Some(root), cssom),
+        };
+
+        //tree.apply(cssom);
+        tree.layout();
+
+        tree
+    }
+
+    fn create_render_object(
+        node: &Option<Rc<RefCell<Node>>>,
+        cssom: &StyleSheet,
+    ) -> Option<Rc<RefCell<RenderObject>>> {
         match node {
-            Some(n) => Some(Rc::new(RefCell::new(RenderObject::new(n.clone())))),
+            Some(n) => {
+                let render_object = Rc::new(RefCell::new(RenderObject::new(n.clone())));
+
+                // apply CSS rules to RenderObject.
+                for rule in &cssom.rules {
+                    if render_object.borrow().is_node_selected(&rule.selector) {
+                        render_object
+                            .borrow_mut()
+                            .set_style(rule.declarations.clone());
+                    }
+                }
+
+                if render_object.borrow().style.display() == DisplayType::DisplayNone {
+                    return None;
+                }
+
+                Some(render_object)
+            }
             None => None,
         }
     }
 
     /// Converts DOM tree to render tree.
-    fn dom_to_render_tree(root: &Option<Rc<RefCell<Node>>>) -> Option<Rc<RefCell<RenderObject>>> {
-        let render_object = Self::dom_to_render_object(&root);
+    fn create_render_tree(
+        node: &Option<Rc<RefCell<Node>>>,
+        cssom: &StyleSheet,
+    ) -> Option<Rc<RefCell<RenderObject>>> {
+        let render_object = Self::create_render_object(&node, cssom);
 
-        let obj = match render_object {
-            Some(ref obj) => obj,
-            None => return None,
-        };
+        if render_object.is_none() {
+            return None;
+        }
 
-        match root {
+        match node {
             Some(n) => {
-                let first_child = Self::dom_to_render_tree(&n.borrow().first_child());
-                let next_sibling = Self::dom_to_render_tree(&n.borrow().next_sibling());
+                let original_first_child = n.borrow().first_child();
+                let original_next_sibling = n.borrow().next_sibling();
+                let mut first_child = Self::create_render_tree(&original_first_child, cssom);
+                let mut next_sibling = Self::create_render_tree(&original_next_sibling, cssom);
 
+                // if the original first child node is "display:none" and the original first child
+                // node has a next sibiling node, treat the next sibling node as a new first child
+                // node.
+                if first_child.is_none() && original_first_child.is_some() {
+                    let mut original_dom_node = original_first_child
+                        .expect("first child should exist")
+                        .borrow()
+                        .next_sibling();
+
+                    loop {
+                        first_child = Self::create_render_tree(&original_dom_node, cssom);
+
+                        // check the next sibling node
+                        if first_child.is_none() && original_dom_node.is_some() {
+                            original_dom_node = original_dom_node
+                                .expect("next sibling should exist")
+                                .borrow()
+                                .next_sibling();
+                            continue;
+                        }
+
+                        break;
+                    }
+                }
+
+                // if the original next sibling node is "display:none" and the original next
+                // sibling node has a next sibling node, treat the next sibling node as a new next
+                // sibling node.
+                if next_sibling.is_none() && n.borrow().next_sibling.is_some() {
+                    let mut original_dom_node = original_next_sibling
+                        .expect("first child should exist")
+                        .borrow()
+                        .next_sibling();
+
+                    loop {
+                        next_sibling = Self::create_render_tree(&original_dom_node, cssom);
+
+                        if next_sibling.is_none() && original_dom_node.is_some() {
+                            original_dom_node = original_dom_node
+                                .expect("next sibling should exist")
+                                .borrow()
+                                .next_sibling();
+                            continue;
+                        }
+
+                        break;
+                    }
+                }
+
+                let obj = match render_object {
+                    Some(ref obj) => obj,
+                    None => panic!("render object should exist here"),
+                };
                 obj.borrow_mut().first_child = first_child;
                 obj.borrow_mut().next_sibling = next_sibling;
             }
-            None => return None,
+            None => {}
         }
 
         return render_object;
-    }
-
-    fn apply_rule_to_render_object(
-        &self,
-        node: &Option<Rc<RefCell<RenderObject>>>,
-        css_rule: &QualifiedRule,
-    ) {
-        match node {
-            Some(n) => {
-                if self.is_node_selected(&n.borrow().kind, &css_rule.selector) {
-                    n.borrow_mut().set_style(css_rule.declarations.clone());
-                }
-
-                self.apply_rule_to_render_object(&n.borrow().first_child(), css_rule);
-                self.apply_rule_to_render_object(&n.borrow().next_sibling(), css_rule);
-            }
-            None => return,
-        }
-    }
-
-    /// Applys CSS Object Model to RenderTree.
-    fn apply(&mut self, cssom: &StyleSheet) {
-        for rule in &cssom.rules {
-            self.apply_rule_to_render_object(&self.root, rule);
-        }
     }
 
     fn layout_node(
