@@ -58,6 +58,9 @@ impl ParsedUrl {
     fn extract_host(url: &String) -> String {
         let splitted_url: Vec<&str> = url.splitn(2, '/').collect();
         splitted_url[0].to_string()
+        //let host_and_port: Vec<&str> = splitted_url[0].splitn(2, ':').collect();
+        //println!("splitted_url {:?}", host_and_port);
+        //host_and_port[0].to_string()
     }
 
     fn extract_path(url: &String) -> Option<String> {
@@ -79,6 +82,13 @@ impl ParsedUrl {
     }
 
     pub fn new(original_url: String) -> Self {
+        // HTTP format
+        // http://<host>:<port>/<path>?<searchpart>
+        //
+        // https://datatracker.ietf.org/doc/html/rfc1738#section-3.3
+        //
+        // possible format:
+        // https://url.spec.whatwg.org/#urls
         let scheme = Self::extract_scheme(&original_url);
         let url = Self::remove_scheme(&original_url, &scheme);
 

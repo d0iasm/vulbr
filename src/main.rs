@@ -3,7 +3,7 @@ mod http;
 mod renderer;
 mod url;
 
-use crate::http::{HttpRequest, Method};
+use crate::http::HttpRequest;
 use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::*;
 use crate::renderer::html::dom::*;
@@ -69,7 +69,7 @@ fn handle_input(url: String) -> RenderTree {
     println!("parsed_url : {:?}", parsed_url);
 
     // send a HTTP request and get a response
-    let request = HttpRequest::new(Method::Get, &parsed_url);
+    let request = HttpRequest::new(&parsed_url);
     let response = match request.get() {
         Ok(res) => res,
         Err(e) => panic!("failed to get http response: {:?}", e),

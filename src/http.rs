@@ -6,19 +6,6 @@ use std::string::String;
 use std::vec::Vec;
 
 #[derive(Debug)]
-pub enum Method {
-    Get,
-}
-
-impl Method {
-    fn name(&self) -> String {
-        match self {
-            Method::Get => String::from("GET"),
-        }
-    }
-}
-
-#[derive(Debug)]
 struct Header {
     key: String,
     value: String,
@@ -32,7 +19,7 @@ impl Header {
 
 #[derive(Debug)]
 pub struct HttpRequest {
-    method: Method,
+    host: String,
     path: String,
     version: String,
     headers: Vec<Header>,
@@ -41,9 +28,9 @@ pub struct HttpRequest {
 
 impl HttpRequest {
     // TODO: remove `method` and add get()/post()/put() etc. functions instead.
-    pub fn new(method: Method, url: &ParsedUrl) -> Self {
+    pub fn new(url: &ParsedUrl) -> Self {
         let mut req = Self {
-            method,
+            host: url.host.clone(),
             path: String::from(&url.path),
             version: String::from("HTTP/1.1"),
             headers: Vec::new(),
@@ -59,10 +46,10 @@ impl HttpRequest {
         self.headers.push(Header::new(key, value));
     }
 
-    pub fn string(&self) -> String {
-        // request line
-        let mut request = self.method.name();
-        request.push(' ');
+    pub fn get(&self) -> std::io::Result<HttpResponse> {
+        let mut stream = TcpStream::connect(&self.host)?;
+
+        let mut request = String::from("GET ");
         request.push_str(&self.path);
         request.push(' ');
         request.push_str(&self.version);
@@ -80,13 +67,7 @@ impl HttpRequest {
         // body
         request.push_str(&self.body);
 
-        request
-    }
-
-    pub fn get(&self) -> std::io::Result<HttpResponse> {
-        let mut stream = TcpStream::connect("127.0.0.1:8888")?;
-
-        stream.write(&self.string().as_bytes())?;
+        stream.write(request.as_bytes())?;
 
         let mut buf = String::new();
         stream.read_to_string(&mut buf)?;
