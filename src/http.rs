@@ -27,7 +27,6 @@ pub struct HttpRequest {
 }
 
 impl HttpRequest {
-    // TODO: remove `method` and add get()/post()/put() etc. functions instead.
     pub fn new(url: &ParsedUrl) -> Self {
         let mut req = Self {
             host: url.host.clone(),
