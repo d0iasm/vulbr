@@ -98,7 +98,7 @@ impl ParsedUrl {
             None => String::new(),
         };
 
-        let port = match Self::extract_port(&host) {
+        let port = match Self::extract_port(&url) {
             Some(h) => h,
             None => scheme.default_port_number(),
         };
