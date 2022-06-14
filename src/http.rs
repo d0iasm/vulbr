@@ -1,11 +1,12 @@
 use crate::url::ParsedUrl;
+use dns_lookup::lookup_host;
 use std::io::prelude::*;
 use std::io::Read;
 use std::net::TcpStream;
 use std::string::String;
 use std::vec::Vec;
 
-#[derive(Debug)]
+/*
 struct Header {
     key: String,
     value: String,
@@ -16,55 +17,57 @@ impl Header {
         Self { key, value }
     }
 }
+*/
 
-#[derive(Debug)]
-pub struct HttpRequest {
-    host: String,
-    path: String,
-    version: String,
-    headers: Vec<Header>,
-    body: String,
-}
+pub struct HttpClient {}
 
-impl HttpRequest {
-    pub fn new(url: &ParsedUrl) -> Self {
-        let mut req = Self {
-            host: url.host.clone(),
-            path: String::from(&url.path),
-            version: String::from("HTTP/1.1"),
-            headers: Vec::new(),
-            body: String::from("sending a request"),
-        };
-
-        req.add_header(String::from("Host"), String::from(&url.host));
-
-        req
+impl HttpClient {
+    pub fn new() -> Self {
+        Self {}
     }
 
-    pub fn add_header(&mut self, key: String, value: String) {
-        self.headers.push(Header::new(key, value));
-    }
+    pub fn get(&self, url: &ParsedUrl) -> std::io::Result<HttpResponse> {
+        let ips: Vec<std::net::IpAddr> = lookup_host(&url.host)?;
+        let ipv4s: Vec<std::net::IpAddr> = ips.into_iter().filter(|ip| ip.is_ipv4()).collect();
+        println!("ips {:?}", ipv4s);
 
-    pub fn get(&self) -> std::io::Result<HttpResponse> {
-        let mut stream = TcpStream::connect(&self.host)?;
+        let mut stream = TcpStream::connect((ipv4s[0], url.port))?;
 
         let mut request = String::from("GET ");
-        request.push_str(&self.path);
-        request.push(' ');
-        request.push_str(&self.version);
+        request.push_str(&url.path);
+        request.push_str(" HTTP/1.1\n");
+
         request.push('\n');
 
+        stream.write(request.as_bytes())?;
+
+        let mut buf = String::new();
+        stream.read_to_string(&mut buf)?;
+
+        Ok(HttpResponse::new(buf))
+    }
+
+    // TODO: support correctly
+    pub fn post(&self, url: &ParsedUrl, body: String) -> std::io::Result<HttpResponse> {
+        let ips: Vec<std::net::IpAddr> = lookup_host(&url.host)?;
+
+        let mut stream = TcpStream::connect((ips[0], url.port))?;
+
+        let mut request = String::from("POST ");
+        request.push_str(&url.path);
+        request.push_str(" HTTP/1.1\n");
+
+        /*
         // headers
-        for h in &self.headers {
+        for h in &url.headers {
             request.push_str(&h.key);
             request.push_str(": ");
             request.push_str(&h.value);
             request.push('\n');
         }
-        request.push('\n');
+        */
 
-        // body
-        request.push_str(&self.body);
+        request.push('\n');
 
         stream.write(request.as_bytes())?;
 
