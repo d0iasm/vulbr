@@ -57,10 +57,8 @@ impl ParsedUrl {
 
     fn extract_host(url: &String) -> String {
         let splitted_url: Vec<&str> = url.splitn(2, '/').collect();
-        splitted_url[0].to_string()
-        //let host_and_port: Vec<&str> = splitted_url[0].splitn(2, ':').collect();
-        //println!("splitted_url {:?}", host_and_port);
-        //host_and_port[0].to_string()
+        let host_and_port: Vec<&str> = splitted_url[0].splitn(2, ':').collect();
+        host_and_port[0].to_string()
     }
 
     fn extract_path(url: &String) -> Option<String> {
@@ -72,10 +70,11 @@ impl ParsedUrl {
         }
     }
 
-    fn extract_port(host: &String) -> Option<u16> {
-        let splitted_host: Vec<&str> = host.splitn(2, ':').collect();
-        if splitted_host.len() == 2 {
-            Some(splitted_host[1].parse::<u16>().unwrap())
+    fn extract_port(url: &String) -> Option<u16> {
+        let splitted_url: Vec<&str> = url.splitn(2, '/').collect();
+        let host_and_port: Vec<&str> = splitted_url[0].splitn(2, ':').collect();
+        if host_and_port.len() == 2 {
+            Some(host_and_port[1].parse::<u16>().unwrap())
         } else {
             None
         }
@@ -89,6 +88,7 @@ impl ParsedUrl {
         //
         // possible format:
         // https://url.spec.whatwg.org/#urls
+
         let scheme = Self::extract_scheme(&original_url);
         let url = Self::remove_scheme(&original_url, &scheme);
 
