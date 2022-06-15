@@ -80,6 +80,7 @@ fn handle_input(url: String) -> RenderTree {
     // html
     let html = response.body();
     let html_tokenizer = HtmlTokenizer::new(html);
+    println!("html tokenizer done");
     let dom_root = HtmlParser::new(html_tokenizer).construct_tree();
     println!("DOM:");
     print_dom(&Some(dom_root.clone()), 0);

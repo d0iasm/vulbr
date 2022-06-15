@@ -39,15 +39,18 @@ pub enum State {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum HtmlToken {
+    // <foo>
     StartTag {
         tag: String,
         self_closing: bool,
         attributes: Vec<Attribute>,
     },
+    // </foo>
     EndTag {
         tag: String,
         self_closing: bool,
     },
+    // "foo"
     Char(char),
     Eof,
 }

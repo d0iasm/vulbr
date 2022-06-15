@@ -395,8 +395,9 @@ impl HtmlParser {
                             return self.root.clone();
                         }
                     }
-                    self.insert_element("html", Vec::new());
-                    self.mode = InsertionMode::BeforeHead;
+                    token = self.t.next();
+                    //self.insert_element("html", Vec::new());
+                    //self.mode = InsertionMode::BeforeHead;
                 } // end of InsertionMode::BeforeHtml
 
                 // https://html.spec.whatwg.org/multipage/parsing.html#the-before-head-insertion-mode
@@ -425,8 +426,9 @@ impl HtmlParser {
                         }
                         _ => {}
                     }
-                    self.insert_element("head", Vec::new());
-                    self.mode = InsertionMode::InHead;
+                    token = self.t.next();
+                    //self.insert_element("head", Vec::new());
+                    //self.mode = InsertionMode::InHead;
                 } // end of InsertionMode::BeforeHead
 
                 // https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-inhead
@@ -483,8 +485,9 @@ impl HtmlParser {
                             return self.root.clone();
                         }
                     }
-                    self.mode = InsertionMode::AfterHead;
-                    self.pop_until(ElementKind::Head);
+                    token = self.t.next();
+                    //self.mode = InsertionMode::AfterHead;
+                    //self.pop_until(ElementKind::Head);
                 } // end of InsertionMode::InHead
 
                 // https://html.spec.whatwg.org/multipage/parsing.html#the-after-head-insertion-mode
@@ -514,8 +517,9 @@ impl HtmlParser {
                         }
                         _ => {}
                     }
-                    self.insert_element("body", Vec::new());
-                    self.mode = InsertionMode::InBody;
+                    token = self.t.next();
+                    //self.insert_element("body", Vec::new());
+                    //self.mode = InsertionMode::InBody;
                 } // end of InsertionMode::AfterHead
 
                 // https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-inbody
@@ -541,6 +545,8 @@ impl HtmlParser {
                                 token = self.t.next();
                                 continue;
                             }
+                            println!("warning: unknown tag {:?}", tag);
+                            token = self.t.next();
                         }
                         Some(HtmlToken::EndTag {
                             ref tag,
@@ -582,6 +588,8 @@ impl HtmlParser {
                                 self.pop_until(ElementKind::Div);
                                 continue;
                             }
+                            println!("warning: unknown tag {:?}", tag);
+                            token = self.t.next();
                         }
                         Some(HtmlToken::Char(c)) => {
                             self.insert_char(c);
@@ -610,7 +618,6 @@ impl HtmlParser {
                                 token = self.t.next();
                                 continue;
                             }
-
                             if tag == "script" {
                                 self.pop_until(ElementKind::Script);
                                 self.mode = self.original_insertion_mode;
