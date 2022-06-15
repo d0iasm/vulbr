@@ -28,16 +28,22 @@ impl HttpClient {
 
     pub fn get(&self, url: &ParsedUrl) -> std::io::Result<HttpResponse> {
         let ips: Vec<std::net::IpAddr> = lookup_host(&url.host)?;
-        let ipv4s: Vec<std::net::IpAddr> = ips.into_iter().filter(|ip| ip.is_ipv4()).collect();
-        println!("ips {:?}", ipv4s);
 
-        let mut stream = TcpStream::connect((ipv4s[0], url.port))?;
+        let mut stream = TcpStream::connect((ips[0], url.port))?;
 
-        let mut request = String::from("GET ");
+        let mut request = String::from("GET /");
         request.push_str(&url.path);
         request.push_str(" HTTP/1.1\n");
 
+        // headers
+        request.push_str("Host: ");
+        request.push_str(&url.host);
         request.push('\n');
+        request.push_str("Accept: */*\n");
+
+        request.push('\n');
+
+        println!("request: {:?}", request);
 
         stream.write(request.as_bytes())?;
 

@@ -62,11 +62,11 @@ fn load_css(css: &[u8]) {
 */
 
 fn handle_input(url: String) -> RenderTree {
-    println!("handle_url : {}", url);
+    println!("handle_url: {}", url);
 
     // parse url
     let parsed_url = ParsedUrl::new(url.to_string());
-    println!("parsed_url : {:?}", parsed_url);
+    println!("parsed_url: {:?}", parsed_url);
 
     // send a HTTP request and get a response
     let client = HttpClient::new();
