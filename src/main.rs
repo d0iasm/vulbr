@@ -87,6 +87,7 @@ fn handle_input(url: String) -> RenderTree {
     println!("----------------------");
 
     // css
+    /*
     let style = get_style_content(dom_root.clone());
     //load_css(style.as_bytes());
     let css_tokenizer = CssTokenizer::new(style);
@@ -106,8 +107,10 @@ fn handle_input(url: String) -> RenderTree {
 
     let mut runtime = JsRuntime::new();
     runtime.execute(&ast);
+    */
 
     // apply css to html and create RenderTree
+    let cssom = StyleSheet::new();
     let render_tree = RenderTree::new(dom_root, &cssom);
 
     println!("----------------------");

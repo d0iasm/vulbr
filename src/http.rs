@@ -40,6 +40,7 @@ impl HttpClient {
         request.push_str(&url.host);
         request.push('\n');
         request.push_str("Accept: */*\n");
+        request.push_str("Connection: close\n");
 
         request.push('\n');
 

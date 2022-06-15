@@ -32,7 +32,7 @@ use std::vec::Vec;
 //     |-- Vec<Declaration>
 //         |-- color: red
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 /// https://www.w3.org/TR/cssom-1/#cssstylesheet
 pub struct StyleSheet {
     /// https://drafts.csswg.org/cssom/#dom-cssstylesheet-cssrules
@@ -49,7 +49,7 @@ impl StyleSheet {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 /// https://www.w3.org/TR/css-syntax-3/#qualified-rule
 /// https://www.w3.org/TR/css-syntax-3/#style-rules
 pub struct QualifiedRule {
@@ -90,7 +90,7 @@ pub enum Selector {
     IdSelector(String),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Declaration {
     pub property: String,
     pub value: ComponentValue,
@@ -115,17 +115,17 @@ impl Declaration {
 }
 
 /// https://www.w3.org/TR/css-syntax-3/#component-value
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ComponentValue {
     /// https://www.w3.org/TR/css-values-3/#keywords
     Keyword(String),
     /// https://www.w3.org/TR/css-values-3/#numeric-types
-    Number(u64),
+    Number(f64),
 }
 
 #[derive(Debug, Clone)]
 pub struct CssParser {
-    t: CssTokenizer,
+    t: std::iter::Peekable<CssTokenizer>,
     /// https://www.w3.org/TR/css-syntax-3/#reconsume-the-current-input-token
     /// True if the next time an algorithm instructs you to consume the next input token, instead
     /// do nothing (retain the current input token unchanged).
@@ -135,7 +135,7 @@ pub struct CssParser {
 impl CssParser {
     pub fn new(t: CssTokenizer) -> Self {
         Self {
-            t,
+            t: t.peekable(),
             reconsumed_token: None,
         }
     }
@@ -177,7 +177,8 @@ impl CssParser {
             CssToken::Ident(ident) => ComponentValue::Keyword(ident.to_string()),
             CssToken::Number(num) => ComponentValue::Number(num),
             _ => {
-                panic!("Parse error: {:?} is an unexpected token.", token);
+                return ComponentValue::Keyword("red".to_string());
+                //panic!("Parse error: {:?} is an unexpected token.", token);
             }
         }
     }
@@ -275,8 +276,24 @@ impl CssParser {
                 CssToken::Ident(ref _ident) => {
                     self.reconsumed_token = Some(token);
                     match self.consume_declaration() {
-                        Some(declaration) => declarations.push(declaration),
+                        Some(declaration) => {
+                            declarations.push(declaration);
+                            if self.t.peek() == Some(&CssToken::Delim(',')) {
+                                self.t.next();
+                            }
+                        }
                         None => {}
+                    }
+                }
+                CssToken::StringToken(_) => {
+                    if self.t.peek() == Some(&CssToken::Delim(',')) {
+                        self.t.next();
+                    }
+                }
+                CssToken::OpenParenthesis | CssToken::CloseParenthesis => {}
+                CssToken::Number(_) => {
+                    if self.t.peek() == Some(&CssToken::Delim(',')) {
+                        self.t.next();
                     }
                 }
                 _ => {

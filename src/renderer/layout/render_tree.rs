@@ -14,8 +14,8 @@ pub struct RenderStyle {
     color: RGB,
     display: DisplayType,
     // TODO: support string (e.g. "auto")
-    height: u64,
-    width: u64,
+    height: f64,
+    width: f64,
     margin: BoxInfo,
     padding: BoxInfo,
 }
@@ -26,10 +26,10 @@ impl RenderStyle {
             background_color: RGB::new(0f64, 0f64, 0f64),
             color: RGB::new(0f64, 0f64, 0f64),
             display: Self::default_display_type(node),
-            width: 0,
-            height: 0,
-            margin: BoxInfo::new(0, 0, 0, 0),
-            padding: BoxInfo::new(0, 0, 0, 0),
+            width: 0f64,
+            height: 0f64,
+            margin: BoxInfo::new(0.0, 0.0, 0.0, 0.0),
+            padding: BoxInfo::new(0.0, 0.0, 0.0, 0.0),
         }
     }
 
@@ -52,7 +52,7 @@ impl RenderStyle {
         self.background_color.clone()
     }
 
-    pub fn height(&self) -> u64 {
+    pub fn height(&self) -> f64 {
         self.height
     }
 
@@ -60,39 +60,39 @@ impl RenderStyle {
         self.display
     }
 
-    pub fn width(&self) -> u64 {
+    pub fn width(&self) -> f64 {
         self.width
     }
 
-    pub fn margin_top(&self) -> u64 {
+    pub fn margin_top(&self) -> f64 {
         self.margin.top
     }
 
-    pub fn margin_left(&self) -> u64 {
+    pub fn margin_left(&self) -> f64 {
         self.margin.left
     }
 
-    pub fn margin_right(&self) -> u64 {
+    pub fn margin_right(&self) -> f64 {
         self.margin.right
     }
 
-    pub fn margin_bottom(&self) -> u64 {
+    pub fn margin_bottom(&self) -> f64 {
         self.margin.right
     }
 
-    pub fn padding_top(&self) -> u64 {
+    pub fn padding_top(&self) -> f64 {
         self.padding.top
     }
 
-    pub fn padding_left(&self) -> u64 {
+    pub fn padding_left(&self) -> f64 {
         self.padding.left
     }
 
-    pub fn padding_right(&self) -> u64 {
+    pub fn padding_right(&self) -> f64 {
         self.padding.right
     }
 
-    pub fn padding_bottom(&self) -> u64 {
+    pub fn padding_bottom(&self) -> f64 {
         self.padding.right
     }
 }
@@ -136,7 +136,7 @@ impl RGB {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum DisplayType {
     Block,
     Inline,
@@ -144,16 +144,16 @@ pub enum DisplayType {
     DisplayNone,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 struct BoxInfo {
-    top: u64,
-    right: u64,
-    left: u64,
-    bottom: u64,
+    top: f64,
+    right: f64,
+    left: f64,
+    bottom: f64,
 }
 
 impl BoxInfo {
-    fn new(top: u64, right: u64, left: u64, bottom: u64) -> Self {
+    fn new(top: f64, right: f64, left: f64, bottom: f64) -> Self {
         Self {
             top,
             right,
@@ -163,14 +163,14 @@ impl BoxInfo {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 struct LayoutPosition {
-    x: u64,
-    y: u64,
+    x: f64,
+    y: f64,
 }
 
 impl LayoutPosition {
-    fn new(x: u64, y: u64) -> Self {
+    fn new(x: f64, y: f64) -> Self {
         Self { x, y }
     }
 }
@@ -198,7 +198,7 @@ impl RenderObject {
             previous_sibling: None,
             next_sibling: None,
             style: RenderStyle::new(&node),
-            position: LayoutPosition::new(0, 0),
+            position: LayoutPosition::new(0.0, 0.0),
         }
     }
 
@@ -226,14 +226,14 @@ impl RenderObject {
                 "height" => {
                     self.style.height = match declaration.value {
                         // TODO: support string (e.g. "auto")
-                        ComponentValue::Keyword(_value) => 0,
+                        ComponentValue::Keyword(_value) => 0.0,
                         ComponentValue::Number(value) => value,
                     };
                 }
                 "width" => {
                     self.style.width = match declaration.value {
                         // TODO: support string (e.g. "auto")
-                        ComponentValue::Keyword(_value) => 0,
+                        ComponentValue::Keyword(_value) => 0.0,
                         ComponentValue::Number(value) => value,
                     };
                 }
@@ -304,7 +304,7 @@ impl RenderObject {
                     }
                     DisplayType::Inline => {
                         // TODO: set position property
-                        self.position.x = 0;
+                        self.position.x = 0.0;
                         self.position.y = parent_style.height;
                     }
                     DisplayType::DisplayNone => {}
@@ -493,7 +493,7 @@ impl RenderTree {
     fn layout(&mut self) {
         let fake_node = Rc::new(RefCell::new(Node::new(NodeKind::Document)));
         let fake_style = RenderStyle::new(&fake_node);
-        let fake_position = LayoutPosition::new(0, 0);
+        let fake_position = LayoutPosition::new(0.0, 0.0);
         self.layout_node(&self.root, &fake_style, &fake_position);
     }
 }
