@@ -70,10 +70,15 @@ impl CssTokenizer {
         return s;
     }
 
+    /// https://www.w3.org/TR/css-syntax-3/#consume-a-string-token
     fn consume_string_token(&mut self) -> String {
         let mut s = String::new();
 
         loop {
+            if self.pos >= self.input.len() {
+                return s;
+            }
+
             self.pos += 1;
             let c = self.input[self.pos];
             match c {
@@ -136,6 +141,10 @@ impl Iterator for CssTokenizer {
             let c = self.input[self.pos];
 
             let token = match c {
+                '"' | '\'' => {
+                    let value = self.consume_string_token();
+                    CssToken::StringToken(value)
+                }
                 '#' => {
                     // TODO: support the case if the next token is not ident code point
                     // "Otherwise, return a <delim-token> with its value set to the current input
@@ -145,12 +154,25 @@ impl Iterator for CssTokenizer {
                     self.pos -= 1;
                     CssToken::HashToken(value)
                 }
-                '.' => CssToken::Delim('.'),
-                ',' => CssToken::Delim(','),
-                ':' => CssToken::Colon,
-                ';' => CssToken::SemiColon,
                 '(' => CssToken::OpenParenthesis,
                 ')' => CssToken::CloseParenthesis,
+                ',' => CssToken::Delim(','),
+                // TODO: support minus number with hyphen.
+                // "If the input stream starts with a number, reconsume the current input code
+                // point, consume a numeric token, and return it."
+                // https://www.w3.org/TR/css-syntax-3/#consume-a-token
+                '-' => {
+                    let t = CssToken::Ident(self.consume_ident_token());
+                    self.pos -= 1;
+                    t
+                }
+                // TODO: support floating number case.
+                // "If the input stream starts with a number, reconsume the current input code
+                // point, consume a numeric token, and return it."
+                // https://www.w3.org/TR/css-syntax-3/#consume-a-token
+                '.' => CssToken::Delim('.'),
+                ':' => CssToken::Colon,
+                ';' => CssToken::SemiColon,
                 '{' => CssToken::OpenCurly,
                 '}' => CssToken::CloseCurly,
                 // digit
@@ -163,7 +185,7 @@ impl Iterator for CssTokenizer {
                 // ident-start code point
                 // Reconsume the current input code point, consume an ident-like token, and return
                 // it.
-                'a'..='z' | 'A'..='Z' | '_' | '-' => {
+                'a'..='z' | 'A'..='Z' | '_' => {
                     let t = CssToken::Ident(self.consume_ident_token());
                     self.pos -= 1;
                     t
@@ -172,18 +194,6 @@ impl Iterator for CssTokenizer {
                 // "Consume as much whitespace as possible. Return a <whitespace-token>."
                 // https://www.w3.org/TR/css-syntax-3/#consume-token
                 ' ' | '\n' => {
-                    self.pos += 1;
-                    continue;
-                }
-                '"' => {
-                    let value = self.consume_string_token();
-                    CssToken::StringToken(value)
-                }
-                '@' => {
-                    // TODO: support media query
-                    while c != '}' {
-                        self.pos += 1;
-                    }
                     self.pos += 1;
                     continue;
                 }

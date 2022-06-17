@@ -87,7 +87,6 @@ fn handle_input(url: String) -> RenderTree {
     println!("----------------------");
 
     // css
-    /*
     let style = get_style_content(dom_root.clone());
     //load_css(style.as_bytes());
     let css_tokenizer = CssTokenizer::new(style);
@@ -96,6 +95,7 @@ fn handle_input(url: String) -> RenderTree {
     println!("CSSOM:\n{:?}", cssom);
     println!("----------------------");
 
+    /*
     // js
     let js = get_js_content(dom_root.clone());
     let lexer = JsLexer::new(js);
@@ -110,7 +110,6 @@ fn handle_input(url: String) -> RenderTree {
     */
 
     // apply css to html and create RenderTree
-    let cssom = StyleSheet::new();
     let render_tree = RenderTree::new(dom_root, &cssom);
 
     println!("----------------------");
