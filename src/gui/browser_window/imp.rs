@@ -1,31 +1,43 @@
+use glib::subclass::InitializingObject;
 use glib::subclass::Signal;
 use glib::{ParamFlags, ParamSpec, ParamSpecString, Value};
-use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::subclass::prelude::*;
-use gtk4::ApplicationWindow;
+use gtk4::{gio, glib, ApplicationWindow, CompositeTemplate, Entry, ListView};
 use once_cell::sync::Lazy;
 use std::cell::RefCell;
 
-#[derive(Default)]
+#[derive(CompositeTemplate, Default)]
+#[template(file = "window.ui")]
 pub struct BrowserWindow {
+    #[template_child]
+    pub entry: TemplateChild<Entry>,
     url: RefCell<String>,
 }
 
 #[glib::object_subclass]
 impl ObjectSubclass for BrowserWindow {
-    const NAME: &'static str = "MyGtkAppBrowserWindow";
+    const NAME: &'static str = "BrowserWindow";
     type Type = super::BrowserWindow;
     type ParentType = ApplicationWindow;
 
-    fn new() -> Self {
-        Self {
-            url: RefCell::new("".to_string()),
-        }
+    fn class_init(klass: &mut Self::Class) {
+        klass.bind_template();
+    }
+
+    fn instance_init(obj: &InitializingObject<Self>) {
+        obj.init_template();
     }
 }
 
 impl ObjectImpl for BrowserWindow {
+    fn constructed(&self, obj: &Self::Type) {
+        // Call "constructed" on parent
+        self.parent_constructed(obj);
+
+        obj.setup_callbacks();
+    }
+
     fn signals() -> &'static [Signal] {
         static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
             vec![Signal::builder(

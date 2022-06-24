@@ -8,8 +8,8 @@ use glib::clone;
 use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::{
-    Align, Application, Box, DrawingArea, HeaderBar, Label, Orientation, SearchBar, SearchEntry,
-    ToggleButton,
+    Align, Application, Box, DrawingArea, Entry, HeaderBar, Label, Orientation, SearchBar,
+    SearchEntry, ToggleButton,
 };
 use std::rc::Rc;
 
@@ -98,6 +98,7 @@ pub fn start_browser_window(handle_input: fn(String) -> RenderTree) {
             window.set_default_size(1280, 800);
             window.set_title(Some("vulbr"));
 
+            /*
             let header_bar = HeaderBar::new();
             window.set_titlebar(Some(&header_bar));
 
@@ -121,7 +122,8 @@ pub fn start_browser_window(handle_input: fn(String) -> RenderTree) {
                 .flags(glib::BindingFlags::SYNC_CREATE | glib::BindingFlags::BIDIRECTIONAL)
                 .build();
 
-            let entry = SearchEntry::new();
+            //let entry = SearchEntry::new();
+            let entry = Entry::new();
             entry.set_hexpand(true);
             search_bar.set_child(Some(&entry));
 
@@ -135,12 +137,43 @@ pub fn start_browser_window(handle_input: fn(String) -> RenderTree) {
 
             container.append(&label);
 
-            entry.connect_activate(clone!(@weak label, @weak window => move |entry| {
+            entry.connect_activate(clone!(@weak label => move |entry| {
                 container.remove(&label);
 
                 let render_tree = handle_input(entry.text().to_string());
                 paint_dom(&render_tree.root, &container);
+
+                entry.set_text("");
+
+                println!("connect_activate !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             }));
+            */
+
+            /*
+            entry.connect_activates_default_notify(clone!(@weak label => move |_| {
+                println!("onnect_activates_default_notify");
+            }));
+
+            entry.connect_placeholder_text_notify(clone!(@weak label => move |_| {
+                println!("connect_placeholder_text_notify");
+            }));
+
+            entry.connect_next_match(clone!(@weak label => move |_| {
+                println!("connect_next_match");
+            }));
+
+            entry.connect_search_started(clone!(@weak search_button => move |_| {
+                println!("conenct_search_started");
+            }));
+
+            entry.connect_stop_search(clone!(@weak search_button => move |_| {
+                println!("conenct_stop_search");
+            }));
+
+            entry.connect_search_changed(clone!(@weak label => move |entry| {
+                println!("entry {:?} key_capture_widget {:?}", entry.text(), entry.key_capture_widget());
+            }));
+            */
 
             window.show();
         }),
