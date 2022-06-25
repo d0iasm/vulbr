@@ -3,7 +3,7 @@ mod imp;
 use glib::{clone, Object};
 use gtk4::prelude::*;
 use gtk4::subclass::prelude::*;
-use gtk4::{gio, glib, Application, NoSelection, SignalListItemFactory};
+use gtk4::{gio, glib, Application};
 
 glib::wrapper! {
     pub struct BrowserWindow(ObjectSubclass<imp::BrowserWindow>)
@@ -18,20 +18,12 @@ impl BrowserWindow {
     }
 
     fn setup_callbacks(&self) {
-        // Setup callback for activation of the entry
         self.imp()
             .entry
-            .connect_activate(clone!(@weak self as window => move |_| {
-                //window.new_task();
-                println!("entry connect_activate");
-            }));
-
-        // Setup callback for clicking (and the releasing) the icon of the entry
-        self.imp()
-            .entry
-            .connect_icon_release(clone!(@weak self as window => move |_,_| {
-                //window.new_task();
-                println!("connect_icon_release");
+            .connect_activate(clone!(@weak self as window => move |entry| {
+                println!("entry connect_activate {:?}", entry);
+                window.emit_by_name::<()>("start-handle-input", &[&entry.text().to_string()]);
+                window.imp().entry.set_placeholder_text(Some(""));
             }));
     }
 }

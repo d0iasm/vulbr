@@ -4,7 +4,7 @@ use crate::renderer::html::dom::{ElementKind, NodeKind};
 use crate::renderer::layout::render_tree::{RenderObject, RenderTree};
 use browser_window::BrowserWindow;
 use core::cell::RefCell;
-use glib::clone;
+use glib::{clone, closure_local};
 use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::{
@@ -97,6 +97,12 @@ pub fn start_browser_window(handle_input: fn(String) -> RenderTree) {
             let window = BrowserWindow::new(app);
             window.set_default_size(1280, 800);
             window.set_title(Some("vulbr"));
+
+            window.connect_closure("start-handle-input", false, closure_local!(move |window: BrowserWindow, url: String| {
+                println!("start-handle-input {:?}", url);
+                let render_tree = handle_input(url);
+                //paint_dom(&render_tree.root, &container);
+            }));
 
             /*
             let header_bar = HeaderBar::new();
