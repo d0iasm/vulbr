@@ -26,4 +26,8 @@ impl BrowserWindow {
                 window.imp().entry.set_placeholder_text(Some(""));
             }));
     }
+
+    pub fn get_content_area(&self) -> gtk4::Box {
+        self.imp().content_area.get()
+    }
 }

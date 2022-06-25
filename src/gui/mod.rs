@@ -7,10 +7,7 @@ use core::cell::RefCell;
 use glib::{clone, closure_local};
 use gtk4::glib;
 use gtk4::prelude::*;
-use gtk4::{
-    Align, Application, Box, DrawingArea, Entry, HeaderBar, Label, Orientation, SearchBar,
-    SearchEntry, ToggleButton,
-};
+use gtk4::{Application, Box, DrawingArea, Label, Orientation};
 use std::rc::Rc;
 
 fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
@@ -101,85 +98,8 @@ pub fn start_browser_window(handle_input: fn(String) -> RenderTree) {
             window.connect_closure("start-handle-input", false, closure_local!(move |window: BrowserWindow, url: String| {
                 println!("start-handle-input {:?}", url);
                 let render_tree = handle_input(url);
-                //paint_dom(&render_tree.root, &container);
+                paint_dom(&render_tree.root, &window.get_content_area());
             }));
-
-            /*
-            let header_bar = HeaderBar::new();
-            window.set_titlebar(Some(&header_bar));
-
-            let search_button = ToggleButton::new();
-            search_button.set_icon_name("system-search-symbolic");
-            search_button.set_active(true);
-            header_bar.pack_end(&search_button);
-
-            let container = Box::new(Orientation::Vertical, 6);
-            window.set_child(Some(&container));
-
-            let search_bar = SearchBar::builder()
-                .valign(Align::Start)
-                .key_capture_widget(&window)
-                .build();
-
-            container.append(&search_bar);
-
-            search_button
-                .bind_property("active", &search_bar, "search-mode-enabled")
-                .flags(glib::BindingFlags::SYNC_CREATE | glib::BindingFlags::BIDIRECTIONAL)
-                .build();
-
-            //let entry = SearchEntry::new();
-            let entry = Entry::new();
-            entry.set_hexpand(true);
-            search_bar.set_child(Some(&entry));
-
-            let label = Label::builder()
-                .label("Welcome to VulBr!")
-                .wrap(true)
-                .vexpand(true)
-                .halign(Align::Center)
-                .valign(Align::Center)
-                .build();
-
-            container.append(&label);
-
-            entry.connect_activate(clone!(@weak label => move |entry| {
-                container.remove(&label);
-
-                let render_tree = handle_input(entry.text().to_string());
-                paint_dom(&render_tree.root, &container);
-
-                entry.set_text("");
-
-                println!("connect_activate !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-            }));
-            */
-
-            /*
-            entry.connect_activates_default_notify(clone!(@weak label => move |_| {
-                println!("onnect_activates_default_notify");
-            }));
-
-            entry.connect_placeholder_text_notify(clone!(@weak label => move |_| {
-                println!("connect_placeholder_text_notify");
-            }));
-
-            entry.connect_next_match(clone!(@weak label => move |_| {
-                println!("connect_next_match");
-            }));
-
-            entry.connect_search_started(clone!(@weak search_button => move |_| {
-                println!("conenct_search_started");
-            }));
-
-            entry.connect_stop_search(clone!(@weak search_button => move |_| {
-                println!("conenct_stop_search");
-            }));
-
-            entry.connect_search_changed(clone!(@weak label => move |entry| {
-                println!("entry {:?} key_capture_widget {:?}", entry.text(), entry.key_capture_widget());
-            }));
-            */
 
             window.show();
         }),

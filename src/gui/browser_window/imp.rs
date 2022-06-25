@@ -1,18 +1,17 @@
 use glib::subclass::InitializingObject;
 use glib::subclass::Signal;
-use glib::{ParamFlags, ParamSpec, ParamSpecString, Value};
 use gtk4::prelude::*;
 use gtk4::subclass::prelude::*;
 use gtk4::{glib, ApplicationWindow, CompositeTemplate, SearchEntry};
 use once_cell::sync::Lazy;
-use std::cell::RefCell;
 
 #[derive(CompositeTemplate, Default)]
 #[template(file = "window.ui")]
 pub struct BrowserWindow {
     #[template_child]
     pub entry: TemplateChild<SearchEntry>,
-    url: RefCell<String>,
+    #[template_child]
+    pub content_area: TemplateChild<gtk4::Box>,
 }
 
 #[glib::object_subclass]
