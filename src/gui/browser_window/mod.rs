@@ -21,13 +21,19 @@ impl BrowserWindow {
         self.imp()
             .entry
             .connect_activate(clone!(@weak self as window => move |entry| {
-                println!("entry connect_activate {:?}", entry);
+                window.clear_content_area();
                 window.emit_by_name::<()>("start-handle-input", &[&entry.text().to_string()]);
-                window.imp().entry.set_placeholder_text(Some(""));
+                entry.set_text("");
             }));
     }
 
     pub fn get_content_area(&self) -> gtk4::Box {
         self.imp().content_area.get()
+    }
+
+    fn clear_content_area(&self) {
+        while let Some(child) = self.imp().content_area.get().first_child() {
+            self.imp().content_area.get().remove(&child);
+        }
     }
 }
