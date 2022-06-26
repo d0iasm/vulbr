@@ -174,9 +174,23 @@ impl CssParser {
         };
 
         match token {
+            // TODO: support tag.class and tag#id
             CssToken::HashToken(value) => Selector::IdSelector(value[1..].to_string()),
-            CssToken::Delim(_delim) => Selector::ClassSelector(self.consume_ident()),
-            CssToken::Ident(ident) => Selector::TypeSelector(ident.to_string()),
+            CssToken::Delim(delim) => {
+                if delim == '.' {
+                    return Selector::ClassSelector(self.consume_ident());
+                }
+                panic!("Parse error: {:?} is an unexpected token.", token);
+            }
+            CssToken::Ident(ident) => {
+                // TODO: fix this. Skip pseudo-classes such as :link and :visited
+                if self.t.peek() == Some(&CssToken::Colon) {
+                    while self.t.peek() != Some(&CssToken::OpenCurly) {
+                        self.t.next();
+                    }
+                }
+                Selector::TypeSelector(ident.to_string())
+            }
             _ => {
                 panic!("Parse error: {:?} is an unexpected token.", token);
             }
