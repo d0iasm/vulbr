@@ -33,6 +33,10 @@ pub enum CssToken {
     Ident(String),
     /// https://www.w3.org/TR/css-syntax-3/#typedef-string-token
     StringToken(String),
+    /// https://www.w3.org/TR/css-syntax-3/#typedef-at-keyword-token
+    AtKeyword(String),
+    /// https://www.w3.org/TR/css-syntax-3/#typedef-whitespace-token
+    Whitespace,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -141,6 +145,12 @@ impl Iterator for CssTokenizer {
             let c = self.input[self.pos];
 
             let token = match c {
+                ' ' => {
+                    while self.input[self.pos] == ' ' {
+                        self.pos += 1;
+                    }
+                    CssToken::Whitespace
+                }
                 '"' | '\'' => {
                     let value = self.consume_string_token();
                     CssToken::StringToken(value)
@@ -173,6 +183,22 @@ impl Iterator for CssTokenizer {
                 '.' => CssToken::Delim('.'),
                 ':' => CssToken::Colon,
                 ';' => CssToken::SemiColon,
+                '@' => {
+                    // If the next 3 input code points would start an ident sequence, consume an
+                    // ident sequence, create an <at-keyword-token> with its value set to the
+                    // returned value, and return it.
+                    if self.input[self.pos + 1].is_ascii_alphabetic()
+                        && self.input[self.pos + 2].is_alphanumeric()
+                    {
+                        // skip '@'
+                        self.pos += 1;
+                        let t = CssToken::AtKeyword(self.consume_ident_token());
+                        self.pos -= 1;
+                        t
+                    } else {
+                        CssToken::Delim('@')
+                    }
+                }
                 '{' => CssToken::OpenCurly,
                 '}' => CssToken::CloseCurly,
                 // digit
@@ -193,7 +219,7 @@ impl Iterator for CssTokenizer {
                 // TODO: handle white spaces property
                 // "Consume as much whitespace as possible. Return a <whitespace-token>."
                 // https://www.w3.org/TR/css-syntax-3/#consume-token
-                ' ' | '\n' => {
+                '\n' => {
                     self.pos += 1;
                     continue;
                 }

@@ -175,7 +175,7 @@ impl CssParser {
 
         match token {
             // TODO: support tag.class and tag#id
-            CssToken::HashToken(value) => Selector::IdSelector(value[1..].to_string()),
+            CssToken::HashToken(value) => return Selector::IdSelector(value[1..].to_string()),
             CssToken::Delim(delim) => {
                 if delim == '.' {
                     return Selector::ClassSelector(self.consume_ident());
@@ -189,10 +189,12 @@ impl CssParser {
                         self.t.next();
                     }
                 }
-                Selector::TypeSelector(ident.to_string())
+                return Selector::TypeSelector(ident.to_string());
             }
             _ => {
-                panic!("Parse error: {:?} is an unexpected token.", token);
+                panic!("warning: unexpected token {:?}", token);
+                //println!("warning: unexpected token {:?}", token);
+                //self.t.next();
             }
         }
     }
@@ -273,7 +275,8 @@ impl CssParser {
                     }
                 }
                 _ => {
-                    panic!("Parse error: {:?} is an unexpected token.", token);
+                    println!("warning: unexpected token {:?}", token);
+                    self.t.next();
                 }
             }
         }
