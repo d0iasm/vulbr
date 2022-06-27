@@ -160,6 +160,7 @@ impl CssParser {
             CssToken::Ident(ident) => ComponentValue::Keyword(ident.to_string()),
             CssToken::Number(num) => ComponentValue::Number(num.clone()),
             _ => {
+                // TODO: implement it correctly.
                 return ComponentValue::Keyword("red".to_string());
                 //panic!("Parse error: {:?} is an unexpected token.", token);
             }
@@ -207,7 +208,7 @@ impl CssParser {
             _ => {
                 panic!("warning: unexpected token {:?}", token);
                 //println!("warning: unexpected token {:?}", token);
-                //self.t.next();
+                //self.consume_selector()
             }
         }
     }
@@ -277,10 +278,6 @@ impl CssParser {
                         self.t.next();
                     }
                 }
-                CssToken::OpenParenthesis | CssToken::CloseParenthesis => {
-                    // TODO: implement correctly
-                    self.t.next();
-                }
                 CssToken::Number(_) => {
                     self.t.next();
                     if self.t.peek() == Some(&CssToken::Delim(',')) {
@@ -294,6 +291,9 @@ impl CssParser {
             }
         }
     }
+
+    /// https://www.w3.org/TR/css-syntax-3/#consume-at-rule
+    fn consume_at_rule(&mut self) {}
 
     /// https://www.w3.org/TR/css-syntax-3/#consume-qualified-rule
     /// https://www.w3.org/TR/css-syntax-3/#qualified-rule
@@ -336,27 +336,32 @@ impl CssParser {
         let mut rules = Vec::new();
 
         loop {
-            /*
             let token = match self.t.peek() {
                 Some(t) => t,
                 None => return rules,
             };
-            // TODO: support other cases
-            // https://www.w3.org/TR/css-syntax-3/#consume-list-of-rules
             match token {
-            // <at-keyword-token>
-            // "Reconsume the current input token. Consume an at-rule, and append the returned value
-            // to the list of rules."
-            }
-            */
-
-            // anything else
-            // "Reconsume the current input token. Consume a qualified rule. If anything is
-            // returned, append it to the list of rules."
-            let rule = self.consume_qualified_rule();
-            match rule {
-                Some(r) => rules.push(r),
-                None => return rules,
+                // <at-keyword-token>
+                // "Reconsume the current input token. Consume an at-rule, and append the returned value
+                // to the list of rules."
+                CssToken::AtKeyword(_keyword) => {
+                    // TODO: implement it correctly. Treat it as a QualifiedRule for now.
+                    let rule = self.consume_qualified_rule();
+                    match rule {
+                        Some(r) => rules.push(r),
+                        None => return rules,
+                    }
+                }
+                _ => {
+                    // anything else
+                    // "Reconsume the current input token. Consume a qualified rule. If anything is
+                    // returned, append it to the list of rules."
+                    let rule = self.consume_qualified_rule();
+                    match rule {
+                        Some(r) => rules.push(r),
+                        None => return rules,
+                    }
+                }
             }
         }
     }
