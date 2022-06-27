@@ -339,6 +339,7 @@ impl RenderObject {
                     }
                     return false;
                 }
+                Selector::UnknownSelector => false,
             },
             _ => false,
         }

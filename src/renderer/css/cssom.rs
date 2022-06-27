@@ -88,6 +88,8 @@ pub enum Selector {
     ClassSelector(String),
     /// https://www.w3.org/TR/selectors-3/#id-selectors
     IdSelector(String),
+    /// This is an unofficial selector.
+    UnknownSelector,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -175,7 +177,7 @@ impl CssParser {
 
         match token {
             // TODO: support tag.class and tag#id
-            CssToken::HashToken(value) => return Selector::IdSelector(value[1..].to_string()),
+            CssToken::HashToken(value) => Selector::IdSelector(value[1..].to_string()),
             CssToken::Delim(delim) => {
                 if delim == '.' {
                     return Selector::ClassSelector(self.consume_ident());
@@ -189,7 +191,18 @@ impl CssParser {
                         self.t.next();
                     }
                 }
-                return Selector::TypeSelector(ident.to_string());
+                Selector::TypeSelector(ident.to_string())
+            }
+            CssToken::AtKeyword(keyword) => {
+                println!(
+                    "warning: at keyword (@) is not supported yet. keyword: {:?}",
+                    keyword
+                );
+                // skip until "{" comes
+                while self.t.peek() != Some(&CssToken::OpenCurly) {
+                    self.t.next();
+                }
+                Selector::UnknownSelector
             }
             _ => {
                 panic!("warning: unexpected token {:?}", token);

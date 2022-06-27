@@ -35,8 +35,6 @@ pub enum CssToken {
     StringToken(String),
     /// https://www.w3.org/TR/css-syntax-3/#typedef-at-keyword-token
     AtKeyword(String),
-    /// https://www.w3.org/TR/css-syntax-3/#typedef-whitespace-token
-    Whitespace,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -145,12 +143,6 @@ impl Iterator for CssTokenizer {
             let c = self.input[self.pos];
 
             let token = match c {
-                ' ' => {
-                    while self.input[self.pos] == ' ' {
-                        self.pos += 1;
-                    }
-                    CssToken::Whitespace
-                }
                 '"' | '\'' => {
                     let value = self.consume_string_token();
                     CssToken::StringToken(value)
@@ -219,7 +211,7 @@ impl Iterator for CssTokenizer {
                 // TODO: handle white spaces property
                 // "Consume as much whitespace as possible. Return a <whitespace-token>."
                 // https://www.w3.org/TR/css-syntax-3/#consume-token
-                '\n' => {
+                ' ' | '\n' => {
                     self.pos += 1;
                     continue;
                 }
