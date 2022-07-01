@@ -50,6 +50,25 @@ impl StyleSheet {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+// TODO: implement it properly
+pub struct AtRule {
+    // TODO: support list of media query
+    /// https://www.w3.org/TR/mediaqueries-5/#typedef-media-query-list
+    pub prelude: String,
+    pub rule: QualifiedRule,
+}
+
+// TODO: support list of media query
+impl AtRule {
+    pub fn new() -> Self {
+        Self {
+            prelude: String::new(),
+            rule: QualifiedRule::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 /// https://www.w3.org/TR/css-syntax-3/#qualified-rule
 /// https://www.w3.org/TR/css-syntax-3/#style-rules
 pub struct QualifiedRule {
@@ -293,7 +312,35 @@ impl CssParser {
     }
 
     /// https://www.w3.org/TR/css-syntax-3/#consume-at-rule
-    fn consume_at_rule(&mut self) {}
+    fn consume_at_rule(&mut self) -> Option<AtRule> {
+        let rule = AtRule::new();
+
+        loop {
+            let token = match self.t.next() {
+                Some(t) => t,
+                None => return None,
+            };
+
+            match token {
+                CssToken::OpenCurly => {
+                    println!(
+                        "consume_at_rule open curly: {:?} {:?}",
+                        token,
+                        self.t.peek()
+                    );
+                    //TODO: set rule to AtRule.
+                    let _qualified_rule = self.consume_qualified_rule();
+                    // consume the close curly for a AtRule block
+                    assert_eq!(self.t.next(), Some(CssToken::CloseCurly));
+                    return Some(rule);
+                }
+                _ => {
+                    println!("consume_at_rule anything else: {:?}", token);
+                    // TODO: set prelude to AtRule
+                }
+            }
+        }
+    }
 
     /// https://www.w3.org/TR/css-syntax-3/#consume-qualified-rule
     /// https://www.w3.org/TR/css-syntax-3/#qualified-rule
@@ -345,12 +392,8 @@ impl CssParser {
                 // "Reconsume the current input token. Consume an at-rule, and append the returned value
                 // to the list of rules."
                 CssToken::AtKeyword(_keyword) => {
-                    // TODO: implement it correctly. Treat it as a QualifiedRule for now.
-                    let rule = self.consume_qualified_rule();
-                    match rule {
-                        Some(r) => rules.push(r),
-                        None => return rules,
-                    }
+                    let _rule = self.consume_at_rule();
+                    // TODO: we ignore media query for now. implement it properly.
                 }
                 _ => {
                     // anything else
