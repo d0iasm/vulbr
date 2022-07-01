@@ -215,6 +215,7 @@ impl RenderObject {
             match declaration.property.as_str() {
                 "background-color" => {
                     if let ComponentValue::Keyword(value) = declaration.value {
+                        println!("background-color: {:?}", value);
                         self.style.background_color = RGB::convert_color_name_to_rgb(&value);
                     }
                 }
@@ -272,7 +273,10 @@ impl RenderObject {
                         ComponentValue::Number(value) => value,
                     };
                 }
-                _ => unimplemented!("css property {} is not supported yet", declaration.property,),
+                _ => println!(
+                    "warning: css property {} is not supported yet",
+                    declaration.property,
+                ),
             }
         }
     }

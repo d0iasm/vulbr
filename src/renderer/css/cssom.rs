@@ -213,11 +213,7 @@ impl CssParser {
                 }
                 Selector::TypeSelector(ident.to_string())
             }
-            CssToken::AtKeyword(keyword) => {
-                println!(
-                    "warning: at keyword (@) is not supported yet. keyword: {:?}",
-                    keyword
-                );
+            CssToken::AtKeyword(_keyword) => {
                 // skip until "{" comes
                 while self.t.peek() != Some(&CssToken::OpenCurly) {
                     self.t.next();
@@ -226,8 +222,6 @@ impl CssParser {
             }
             _ => {
                 panic!("warning: unexpected token {:?}", token);
-                //println!("warning: unexpected token {:?}", token);
-                //self.consume_selector()
             }
         }
     }
