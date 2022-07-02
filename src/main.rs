@@ -45,22 +45,6 @@ fn print_render_object(node: &Option<Rc<RefCell<RenderObject>>>, depth: usize) {
     }
 }
 
-/*
-// TODO: replace load_css with gtk4::render_background (?)
-fn load_css(css: &[u8]) {
-    // Load the CSS file and add it to the provider
-    let provider = CssProvider::new();
-    provider.load_from_data(css);
-
-    // Add the provider to the default screen
-    StyleContext::add_provider_for_display(
-        &Display::default().expect("Could not connect to a display."),
-        &provider,
-        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
-    );
-}
-*/
-
 fn handle_input(url: String) -> RenderTree {
     println!("handle_url: {}", url);
 

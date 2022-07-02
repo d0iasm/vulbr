@@ -136,11 +136,13 @@ impl Declaration {
 }
 
 /// https://www.w3.org/TR/css-syntax-3/#component-value
+/// https://www.w3.org/TR/css-values-4/#component-types
 #[derive(Debug, Clone, PartialEq)]
 pub enum ComponentValue {
     /// https://www.w3.org/TR/css-values-3/#keywords
     Keyword(String),
     /// https://www.w3.org/TR/css-values-3/#numeric-types
+    /// This is one of basic data types.
     Number(f64),
 }
 
@@ -179,6 +181,10 @@ impl CssParser {
             CssToken::Ident(ident) => ComponentValue::Keyword(ident.to_string()),
             CssToken::Number(num) => ComponentValue::Number(num.clone()),
             _ => {
+                println!(
+                    "warning: token {:?} as a component value is not supported yet",
+                    token
+                );
                 // TODO: implement it correctly.
                 return ComponentValue::Keyword("red".to_string());
                 //panic!("Parse error: {:?} is an unexpected token.", token);

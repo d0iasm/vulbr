@@ -50,16 +50,6 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                     cairo_context.set_source_rgb(bg_rgb.r, bg_rgb.g, bg_rgb.b);
                     cairo_context.fill().expect("failed to fill out div");
                 });
-                /*
-                for attr in &element.attributes {
-                    if attr.name == "id" {
-                        div.set_widget_name(&attr.value);
-                    }
-                    if attr.name == "class" {
-                        div.add_css_class(&attr.value);
-                    }
-                }
-                */
                 content_area.append(&div);
             }
         },

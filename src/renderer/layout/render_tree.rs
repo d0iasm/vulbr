@@ -134,6 +134,39 @@ impl RGB {
             _ => panic!("unsupported color name {}", color),
         }
     }
+
+    fn convert_color_code_to_rgb(code: &str) -> RGB {
+        RGB::new(0.0, 0.0, 0.0)
+    }
+
+    fn convert_color_name_to_code(color: &str) -> String {
+        // Currently, it supports basic colors and "orange" and "lightgrayc".
+        // https://www.w3.org/wiki/CSS/Properties/color/keywords
+        match color {
+            "black" => "#000000".to_string(),
+            "silver" => "#c0c0c0".to_string(),
+            "gray" => "#808080".to_string(),
+            "white" => "#ffffff".to_string(),
+            "maroon" => "#800000".to_string(),
+            "red" => "#ff0000".to_string(),
+            "purple" => "#800080".to_string(),
+            "fuchsia" => "#ff00ff".to_string(),
+            "green" => "#008000".to_string(),
+            "lime" => "#00ff00".to_string(),
+            "olive" => "#808000".to_string(),
+            "yellow" => "#ffff00".to_string(),
+            "navy" => "#000080".to_string(),
+            "blue" => "#0000ff".to_string(),
+            "teal" => "#008080".to_string(),
+            "aqua" => "#00ffff".to_string(),
+            "orange" => "#ffa500".to_string(),
+            "lightgray" => "#d3d3d3".to_string(),
+            _ => {
+                println!("warning: color name {:?} is not supported yet", color);
+                "#ffffff".to_string()
+            }
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
