@@ -3,6 +3,7 @@
 
 use crate::renderer::css::cssom::*;
 use crate::renderer::html::dom::*;
+use crate::renderer::layout::color::*;
 use core::cell::RefCell;
 use std::rc::{Rc, Weak};
 use std::vec::Vec;
@@ -10,8 +11,8 @@ use std::vec::Vec;
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct RenderStyle {
-    background_color: RGB,
-    color: RGB,
+    background_color: Color,
+    color: Color,
     display: DisplayType,
     // TODO: support string (e.g. "auto")
     height: f64,
@@ -23,10 +24,11 @@ pub struct RenderStyle {
 impl RenderStyle {
     pub fn new(node: &Rc<RefCell<Node>>) -> Self {
         Self {
-            background_color: RGB::new(0f64, 0f64, 0f64),
-            color: RGB::new(0f64, 0f64, 0f64),
+            background_color: Color::from_name("white"),
+            color: Color::from_name("black"),
             display: Self::default_display_type(node),
-            width: 0f64,
+            // 1200 is a default value defined at src/gui/browser_window/window.ui
+            width: 1200f64,
             height: 0f64,
             margin: BoxInfo::new(0.0, 0.0, 0.0, 0.0),
             padding: BoxInfo::new(0.0, 0.0, 0.0, 0.0),
@@ -48,8 +50,12 @@ impl RenderStyle {
         }
     }
 
-    pub fn background_color(&self) -> RGB {
+    pub fn background_color(&self) -> Color {
         self.background_color.clone()
+    }
+
+    pub fn color(&self) -> Color {
+        self.color.clone()
     }
 
     pub fn height(&self) -> f64 {
@@ -94,78 +100,6 @@ impl RenderStyle {
 
     pub fn padding_bottom(&self) -> f64 {
         self.padding.right
-    }
-}
-
-#[derive(Debug, Copy, Clone)]
-pub struct RGB {
-    pub r: f64,
-    pub g: f64,
-    pub b: f64,
-}
-
-impl RGB {
-    fn new(r: f64, g: f64, b: f64) -> Self {
-        Self { r, g, b }
-    }
-
-    fn convert_color_name_to_rgb(color: &str) -> RGB {
-        // Currently, it supports basic colors and "orange" and "lightgrayc".
-        // https://www.w3.org/wiki/CSS/Properties/color/keywords
-        match color {
-            "black" => RGB::new(0.0, 0.0, 0.0),           // #000000
-            "silver" => RGB::new(0.752, 0.752, 0.752),    // #c0c0c0
-            "gray" => RGB::new(0.501, 0.501, 0.501),      // #808080
-            "white" => RGB::new(1.0, 1.0, 1.0),           // #ffffff
-            "maroon" => RGB::new(0.501, 0.0, 0.0),        // #800000
-            "red" => RGB::new(1.0, 0.0, 0.0),             // #ff0000
-            "purple" => RGB::new(0.501, 0.0, 0.501),      // #800080
-            "fuchsia" => RGB::new(1.0, 0.0, 1.0),         // #ff00ff
-            "green" => RGB::new(0.0, 0.501, 0.0),         // #008000
-            "lime" => RGB::new(0.0, 1.0, 0.0),            // #00ff00
-            "olive" => RGB::new(0.501, 0.501, 0.0),       // #808000
-            "yellow" => RGB::new(1.0, 1.0, 0.0),          // #ffff00
-            "navy" => RGB::new(0.0, 0.0, 0.501),          // #000080
-            "blue" => RGB::new(0.0, 0.0, 1.0),            // #0000ff
-            "teal" => RGB::new(0.0, 0.501, 0.501),        // #008080
-            "aqua" => RGB::new(0.0, 1.0, 1.0),            // #00ffff
-            "orange" => RGB::new(1.0, 0.647, 0.0),        // #ffa500
-            "lightgray" => RGB::new(0.827, 0.827, 0.827), // #d3d3d3
-            _ => panic!("unsupported color name {}", color),
-        }
-    }
-
-    fn convert_color_code_to_rgb(code: &str) -> RGB {
-        RGB::new(0.0, 0.0, 0.0)
-    }
-
-    fn convert_color_name_to_code(color: &str) -> String {
-        // Currently, it supports basic colors and "orange" and "lightgrayc".
-        // https://www.w3.org/wiki/CSS/Properties/color/keywords
-        match color {
-            "black" => "#000000".to_string(),
-            "silver" => "#c0c0c0".to_string(),
-            "gray" => "#808080".to_string(),
-            "white" => "#ffffff".to_string(),
-            "maroon" => "#800000".to_string(),
-            "red" => "#ff0000".to_string(),
-            "purple" => "#800080".to_string(),
-            "fuchsia" => "#ff00ff".to_string(),
-            "green" => "#008000".to_string(),
-            "lime" => "#00ff00".to_string(),
-            "olive" => "#808000".to_string(),
-            "yellow" => "#ffff00".to_string(),
-            "navy" => "#000080".to_string(),
-            "blue" => "#0000ff".to_string(),
-            "teal" => "#008080".to_string(),
-            "aqua" => "#00ffff".to_string(),
-            "orange" => "#ffa500".to_string(),
-            "lightgray" => "#d3d3d3".to_string(),
-            _ => {
-                println!("warning: color name {:?} is not supported yet", color);
-                "#ffffff".to_string()
-            }
-        }
     }
 }
 
@@ -248,13 +182,14 @@ impl RenderObject {
             match declaration.property.as_str() {
                 "background-color" => {
                     if let ComponentValue::Keyword(value) = declaration.value {
-                        println!("background-color: {:?}", value);
-                        self.style.background_color = RGB::convert_color_name_to_rgb(&value);
+                        println!("background-color !!!!!!!!!!!!!!!!!!!!!!!!!: {:?}", value);
+                        self.style.background_color = Color::from_name(&value);
                     }
                 }
                 "color" => {
                     if let ComponentValue::Keyword(value) = declaration.value {
-                        self.style.color = RGB::convert_color_name_to_rgb(&value);
+                        println!("color value !!!!!!!!!!!!!!!!!!!!!!!!!!!!!! {:?}", value);
+                        self.style.color = Color::from_name(&value);
                     }
                 }
                 "height" => {

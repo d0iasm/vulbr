@@ -160,8 +160,6 @@ pub enum ElementKind {
     Style,
     /// https://html.spec.whatwg.org/multipage/scripting.html#the-script-element
     Script,
-    /// https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-incdata
-    Text,
     /// https://html.spec.whatwg.org/multipage/sections.html#the-body-element
     Body,
     /// https://html.spec.whatwg.org/multipage/grouping-content.html#the-ul-element

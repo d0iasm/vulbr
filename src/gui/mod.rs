@@ -7,7 +7,7 @@ use core::cell::RefCell;
 use glib::{clone, closure_local};
 use gtk4::glib;
 use gtk4::prelude::*;
-use gtk4::{Application, Box, DrawingArea, Label, Orientation};
+use gtk4::{Application, Box, DrawingArea, Justification, Label, Orientation};
 use std::rc::Rc;
 
 fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
@@ -20,7 +20,6 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             | ElementKind::Script
             | ElementKind::Body => {}
             ElementKind::Link => {}
-            ElementKind::Text => {}
             ElementKind::Ul => {}
             ElementKind::Li => {}
             ElementKind::Div => {
@@ -35,7 +34,7 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                     .margin_bottom(node.borrow().style.margin_bottom() as i32)
                     .build();
 
-                let bg_rgb = node.borrow().style.background_color();
+                let bg_rgb = node.borrow().style.background_color().rgb();
                 let padding_top = node.borrow().style.padding_top();
                 let padding_right = node.borrow().style.padding_right();
                 let padding_bottom = node.borrow().style.padding_bottom();
@@ -47,14 +46,20 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                         (width - padding_right) as f64,
                         (height - padding_bottom) as f64,
                     );
-                    cairo_context.set_source_rgb(bg_rgb.r, bg_rgb.g, bg_rgb.b);
+                    cairo_context.set_source_rgb(bg_rgb.0, bg_rgb.1, bg_rgb.2);
                     cairo_context.fill().expect("failed to fill out div");
                 });
                 content_area.append(&div);
             }
         },
         NodeKind::Text(text) => {
-            let label = Label::builder().label(text).wrap(true).build();
+            let label = Label::builder()
+                .justify(Justification::Left)
+                .wrap(true)
+                .build();
+            if let Some(color_name) = node.borrow().style.color().name() {
+                label.set_markup(&format!("<span foreground=\"{color_name}\">{text}</span>"));
+            }
 
             content_area.append(&label);
         }
