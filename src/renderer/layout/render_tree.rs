@@ -50,6 +50,11 @@ impl RenderStyle {
         }
     }
 
+    fn inherit(&mut self, parent_style: &RenderStyle) {
+        self.color = parent_style.color().clone();
+        self.background_color = parent_style.background_color().clone();
+    }
+
     pub fn background_color(&self) -> Color {
         self.background_color.clone()
     }
@@ -147,8 +152,8 @@ pub struct RenderObject {
     // Similar structure with Node in renderer/dom.rs.
     pub kind: NodeKind,
     first_child: Option<Rc<RefCell<RenderObject>>>,
-    last_child: Option<Weak<RefCell<RenderObject>>>,
-    previous_sibling: Option<Weak<RefCell<RenderObject>>>,
+    _last_child: Option<Weak<RefCell<RenderObject>>>,
+    _previous_sibling: Option<Weak<RefCell<RenderObject>>>,
     next_sibling: Option<Rc<RefCell<RenderObject>>>,
     // CSS information.
     pub style: RenderStyle,
@@ -161,8 +166,8 @@ impl RenderObject {
         Self {
             kind: node.borrow().kind.clone(),
             first_child: None,
-            last_child: None,
-            previous_sibling: None,
+            _last_child: None,
+            _previous_sibling: None,
             next_sibling: None,
             style: RenderStyle::new(&node),
             position: LayoutPosition::new(0.0, 0.0),
@@ -182,13 +187,11 @@ impl RenderObject {
             match declaration.property.as_str() {
                 "background-color" => {
                     if let ComponentValue::Keyword(value) = declaration.value {
-                        println!("background-color !!!!!!!!!!!!!!!!!!!!!!!!!: {:?}", value);
                         self.style.background_color = Color::from_name(&value);
                     }
                 }
                 "color" => {
                     if let ComponentValue::Keyword(value) = declaration.value {
-                        println!("color value !!!!!!!!!!!!!!!!!!!!!!!!!!!!!! {:?}", value);
                         self.style.color = Color::from_name(&value);
                     }
                 }
@@ -326,10 +329,9 @@ pub struct RenderTree {
 impl RenderTree {
     pub fn new(root: Rc<RefCell<Node>>, cssom: &StyleSheet) -> Self {
         let mut tree = Self {
-            root: Self::create_render_tree(&Some(root), cssom),
+            root: Self::create_render_tree(&Some(root), &None, cssom),
         };
 
-        //tree.apply(cssom);
         tree.layout();
 
         tree
@@ -337,11 +339,18 @@ impl RenderTree {
 
     fn create_render_object(
         node: &Option<Rc<RefCell<Node>>>,
+        parent_obj: &Option<Rc<RefCell<RenderObject>>>,
         cssom: &StyleSheet,
     ) -> Option<Rc<RefCell<RenderObject>>> {
         match node {
             Some(n) => {
                 let render_object = Rc::new(RefCell::new(RenderObject::new(n.clone())));
+                if let Some(parent) = parent_obj {
+                    render_object
+                        .borrow_mut()
+                        .style
+                        .inherit(&parent.borrow().style);
+                }
 
                 // apply CSS rules to RenderObject.
                 for rule in &cssom.rules {
@@ -365,9 +374,10 @@ impl RenderTree {
     /// Converts DOM tree to render tree.
     fn create_render_tree(
         node: &Option<Rc<RefCell<Node>>>,
+        parent_obj: &Option<Rc<RefCell<RenderObject>>>,
         cssom: &StyleSheet,
     ) -> Option<Rc<RefCell<RenderObject>>> {
-        let render_object = Self::create_render_object(&node, cssom);
+        let render_object = Self::create_render_object(&node, parent_obj, cssom);
 
         if render_object.is_none() {
             return None;
@@ -377,8 +387,10 @@ impl RenderTree {
             Some(n) => {
                 let original_first_child = n.borrow().first_child();
                 let original_next_sibling = n.borrow().next_sibling();
-                let mut first_child = Self::create_render_tree(&original_first_child, cssom);
-                let mut next_sibling = Self::create_render_tree(&original_next_sibling, cssom);
+                let mut first_child =
+                    Self::create_render_tree(&original_first_child, &render_object, cssom);
+                let mut next_sibling =
+                    Self::create_render_tree(&original_next_sibling, &None, cssom);
 
                 // if the original first child node is "display:none" and the original first child
                 // node has a next sibiling node, treat the next sibling node as a new first child
@@ -390,7 +402,8 @@ impl RenderTree {
                         .next_sibling();
 
                     loop {
-                        first_child = Self::create_render_tree(&original_dom_node, cssom);
+                        first_child =
+                            Self::create_render_tree(&original_dom_node, &render_object, cssom);
 
                         // check the next sibling node
                         if first_child.is_none() && original_dom_node.is_some() {
@@ -415,7 +428,7 @@ impl RenderTree {
                         .next_sibling();
 
                     loop {
-                        next_sibling = Self::create_render_tree(&original_dom_node, cssom);
+                        next_sibling = Self::create_render_tree(&original_dom_node, &None, cssom);
 
                         if next_sibling.is_none() && original_dom_node.is_some() {
                             original_dom_node = original_dom_node
