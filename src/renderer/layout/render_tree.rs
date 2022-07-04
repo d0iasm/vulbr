@@ -164,7 +164,7 @@ pub enum DisplayType {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-struct BoxInfo {
+pub struct BoxInfo {
     top: f64,
     right: f64,
     left: f64,

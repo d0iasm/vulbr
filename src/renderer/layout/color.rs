@@ -67,7 +67,7 @@ impl Color {
         }
     }
 
-    pub fn from_code(code: &str) -> Self {
+    pub fn _from_code(code: &str) -> Self {
         if code.chars().nth(0) != Some('#') || code.len() != 7 {
             // TODO: support color code with 4 chars such as "#fff".
             panic!("invalid color code {}", code);
@@ -112,25 +112,24 @@ impl Color {
         }
     }
 
-    pub fn name(&self) -> Option<String> {
-        self.name.clone()
-    }
-
-    pub fn code(&self) -> String {
-        self.code.clone()
-    }
-
-    pub fn rgb(&self) -> (f64, f64, f64) {
-        self.rgb
-    }
-
-    /*
-    pub fn from_rgb() -> Self {
+    pub fn _from_rgb() -> Self {
+        // TODO: implement
         Self {
             name: Some("white".to_string()),
             code: "#ffffff".to_string(),
             rgb: (0.0, 0.0, 0.0),
         }
     }
-    */
+
+    pub fn name(&self) -> Option<String> {
+        self.name.clone()
+    }
+
+    pub fn _code(&self) -> String {
+        self.code.clone()
+    }
+
+    pub fn rgb(&self) -> (f64, f64, f64) {
+        self.rgb
+    }
 }
