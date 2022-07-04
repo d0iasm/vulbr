@@ -11,27 +11,25 @@ use std::vec::Vec;
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct RenderStyle {
-    background_color: Color,
-    color: Color,
+    background_color: Option<Color>,
+    color: Option<Color>,
     display: DisplayType,
-    // TODO: support string (e.g. "auto")
-    height: f64,
-    width: f64,
-    margin: BoxInfo,
-    padding: BoxInfo,
+    height: Option<f64>,
+    width: Option<f64>,
+    margin: Option<BoxInfo>,
+    padding: Option<BoxInfo>,
 }
 
 impl RenderStyle {
     pub fn new(node: &Rc<RefCell<Node>>) -> Self {
         Self {
-            background_color: Color::from_name("white"),
-            color: Color::from_name("black"),
+            background_color: None,
+            color: None,
             display: Self::default_display_type(node),
-            // 1200 is a default value defined at src/gui/browser_window/window.ui
-            width: 1200f64,
-            height: 0f64,
-            margin: BoxInfo::new(0.0, 0.0, 0.0, 0.0),
-            padding: BoxInfo::new(0.0, 0.0, 0.0, 0.0),
+            width: None,
+            height: None,
+            margin: None,
+            padding: None,
         }
     }
 
@@ -51,20 +49,48 @@ impl RenderStyle {
     }
 
     fn inherit(&mut self, parent_style: &RenderStyle) {
-        self.color = parent_style.color().clone();
-        self.background_color = parent_style.background_color().clone();
+        if self.color.is_none() {
+            self.color = Some(parent_style.color().clone());
+        }
+        if self.background_color.is_none() {
+            self.background_color = Some(parent_style.background_color().clone());
+        }
+        if self.height.is_none() {
+            self.height = Some(parent_style.height().clone());
+        }
+        if self.width.is_none() {
+            self.width = Some(parent_style.width().clone());
+        }
+        if self.margin.is_none() {
+            self.margin = Some(parent_style.margin().clone());
+        }
+        if self.padding.is_none() {
+            self.padding = Some(parent_style.padding().clone());
+        }
     }
 
     pub fn background_color(&self) -> Color {
-        self.background_color.clone()
+        if let Some(ref bc) = self.background_color {
+            bc.clone()
+        } else {
+            Color::from_name("white")
+        }
     }
 
     pub fn color(&self) -> Color {
-        self.color.clone()
+        if let Some(ref c) = self.color {
+            c.clone()
+        } else {
+            Color::from_name("black")
+        }
     }
 
     pub fn height(&self) -> f64 {
-        self.height
+        if let Some(h) = self.height {
+            h
+        } else {
+            0f64
+        }
     }
 
     pub fn display(&self) -> DisplayType {
@@ -72,39 +98,60 @@ impl RenderStyle {
     }
 
     pub fn width(&self) -> f64 {
-        self.width
+        if let Some(w) = self.width {
+            w
+        } else {
+            // 1200 is a default value defined at src/gui/browser_window/window.ui
+            1200.0f64
+        }
+    }
+
+    pub fn margin(&self) -> BoxInfo {
+        if let Some(ref m) = self.margin {
+            m.clone()
+        } else {
+            BoxInfo::new(0.0, 0.0, 0.0, 0.0)
+        }
+    }
+
+    pub fn padding(&self) -> BoxInfo {
+        if let Some(ref p) = self.padding {
+            p.clone()
+        } else {
+            BoxInfo::new(0.0, 0.0, 0.0, 0.0)
+        }
     }
 
     pub fn margin_top(&self) -> f64 {
-        self.margin.top
+        self.margin().top
     }
 
     pub fn margin_left(&self) -> f64 {
-        self.margin.left
+        self.margin().left
     }
 
     pub fn margin_right(&self) -> f64 {
-        self.margin.right
+        self.margin().right
     }
 
     pub fn margin_bottom(&self) -> f64 {
-        self.margin.right
+        self.margin().bottom
     }
 
     pub fn padding_top(&self) -> f64 {
-        self.padding.top
+        self.padding().top
     }
 
     pub fn padding_left(&self) -> f64 {
-        self.padding.left
+        self.padding().left
     }
 
     pub fn padding_right(&self) -> f64 {
-        self.padding.right
+        self.padding().right
     }
 
     pub fn padding_bottom(&self) -> f64 {
-        self.padding.right
+        self.padding().bottom
     }
 }
 
@@ -187,63 +234,63 @@ impl RenderObject {
             match declaration.property.as_str() {
                 "background-color" => {
                     if let ComponentValue::Keyword(value) = declaration.value {
-                        self.style.background_color = Color::from_name(&value);
+                        self.style.background_color = Some(Color::from_name(&value));
                     }
                 }
                 "color" => {
                     if let ComponentValue::Keyword(value) = declaration.value {
-                        self.style.color = Color::from_name(&value);
+                        self.style.color = Some(Color::from_name(&value));
                     }
                 }
                 "height" => {
-                    self.style.height = match declaration.value {
-                        // TODO: support string (e.g. "auto")
-                        ComponentValue::Keyword(_value) => 0.0,
-                        ComponentValue::Number(value) => value,
-                    };
+                    if let ComponentValue::Number(value) = declaration.value {
+                        self.style.height = Some(value);
+                    }
                 }
                 "width" => {
-                    self.style.width = match declaration.value {
-                        // TODO: support string (e.g. "auto")
-                        ComponentValue::Keyword(_value) => 0.0,
-                        ComponentValue::Number(value) => value,
-                    };
+                    if let ComponentValue::Number(value) = declaration.value {
+                        self.style.width = Some(value);
+                    }
                 }
                 "margin" => {
-                    self.style.margin = match declaration.value {
-                        // TODO: support string (e.g. "auto")
-                        ComponentValue::Keyword(_value) => self.style.margin.clone(),
-                        ComponentValue::Number(value) => BoxInfo::new(value, value, value, value),
-                    };
+                    // TODO: support string (e.g. "auto")
+                    if let ComponentValue::Number(value) = declaration.value {
+                        self.style.margin = Some(BoxInfo::new(value, value, value, value));
+                    }
                 }
                 "margin-top" => {
-                    self.style.margin.top = match declaration.value {
-                        // TODO: support string (e.g. "auto")
-                        ComponentValue::Keyword(_value) => self.style.margin.top,
-                        ComponentValue::Number(value) => value,
-                    };
+                    if let ComponentValue::Number(value) = declaration.value {
+                        self.style.margin = match &self.style.margin {
+                            Some(m) => Some(BoxInfo::new(value, m.right, m.bottom, m.left)),
+                            None => Some(BoxInfo::new(value, 0.0, 0.0, 0.0)),
+                        };
+                    }
                 }
                 "margin-right" => {
-                    self.style.margin.right = match declaration.value {
-                        // TODO: support string (e.g. "auto")
-                        ComponentValue::Keyword(_value) => self.style.margin.right,
-                        ComponentValue::Number(value) => value,
-                    };
+                    if let ComponentValue::Number(value) = declaration.value {
+                        self.style.margin = match &self.style.margin {
+                            Some(m) => Some(BoxInfo::new(m.top, value, m.bottom, m.left)),
+                            None => Some(BoxInfo::new(0.0, value, 0.0, 0.0)),
+                        };
+                    }
                 }
                 "margin-bottom" => {
-                    self.style.margin.bottom = match declaration.value {
-                        // TODO: support string (e.g. "auto")
-                        ComponentValue::Keyword(_value) => self.style.margin.bottom,
-                        ComponentValue::Number(value) => value,
-                    };
+                    if let ComponentValue::Number(value) = declaration.value {
+                        self.style.margin = match &self.style.margin {
+                            Some(m) => Some(BoxInfo::new(m.top, m.right, value, m.left)),
+                            None => Some(BoxInfo::new(0.0, 0.0, value, 0.0)),
+                        };
+                    }
                 }
                 "margin-left" => {
-                    self.style.margin.left = match declaration.value {
-                        // TODO: support string (e.g. "auto")
-                        ComponentValue::Keyword(_value) => self.style.margin.left,
-                        ComponentValue::Number(value) => value,
-                    };
+                    if let ComponentValue::Number(value) = declaration.value {
+                        self.style.margin = match &self.style.margin {
+                            Some(m) => Some(BoxInfo::new(m.top, m.right, m.bottom, value)),
+                            None => Some(BoxInfo::new(0.0, 0.0, 0.0, value)),
+                        };
+                    }
                 }
+                // TODO: support padding
                 _ => println!(
                     "warning: css property {} is not supported yet",
                     declaration.property,
@@ -258,11 +305,11 @@ impl RenderObject {
                 match self.style.display() {
                     DisplayType::Block => {
                         // TODO: set position property
-                        self.position.x = self.style.margin.left;
-                        self.position.y = self.style.margin.top + parent_style.height;
+                        self.position.x = self.style.margin().left;
+                        self.position.y = self.style.margin().top + parent_style.height();
                     }
                     DisplayType::Inline => {
-                        self.position.x = parent_position.x + parent_style.width;
+                        self.position.x = parent_position.x + parent_style.width();
                         self.position.y = parent_position.y;
                     }
                     DisplayType::DisplayNone => {}
@@ -271,16 +318,16 @@ impl RenderObject {
             DisplayType::Block => {
                 match self.style.display() {
                     DisplayType::Block => {
-                        self.position.x = self.style.margin.left;
+                        self.position.x = self.style.margin().left;
                         self.position.y = parent_position.y
-                            + parent_style.height
-                            + parent_style.margin.bottom
-                            + self.style.margin.top;
+                            + parent_style.height()
+                            + parent_style.margin().bottom
+                            + self.style.margin().top;
                     }
                     DisplayType::Inline => {
                         // TODO: set position property
                         self.position.x = 0.0;
-                        self.position.y = parent_style.height;
+                        self.position.y = parent_style.height();
                     }
                     DisplayType::DisplayNone => {}
                 }
