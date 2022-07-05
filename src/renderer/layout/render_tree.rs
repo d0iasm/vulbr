@@ -18,6 +18,7 @@ pub struct RenderStyle {
     width: Option<f64>,
     margin: Option<BoxInfo>,
     padding: Option<BoxInfo>,
+    font_size: Option<FontSize>,
 }
 
 impl RenderStyle {
@@ -30,6 +31,7 @@ impl RenderStyle {
             height: None,
             margin: None,
             padding: None,
+            font_size: Self::default_font_size(node),
         }
     }
 
@@ -45,6 +47,16 @@ impl RenderStyle {
                 _ => DisplayType::Inline,
             },
             _ => DisplayType::Inline,
+        }
+    }
+
+    fn default_font_size(node: &Rc<RefCell<Node>>) -> Option<FontSize> {
+        match &node.borrow().kind {
+            NodeKind::Element(element) => match element.kind {
+                ElementKind::H1 => Some(FontSize::Large),
+                _ => None,
+            },
+            _ => None,
         }
     }
 
@@ -66,6 +78,9 @@ impl RenderStyle {
         }
         if self.padding.is_none() {
             self.padding = Some(parent_style.padding().clone());
+        }
+        if self.font_size.is_none() {
+            self.font_size = Some(parent_style.font_size().clone());
         }
     }
 
@@ -119,6 +134,14 @@ impl RenderStyle {
             p.clone()
         } else {
             BoxInfo::new(0.0, 0.0, 0.0, 0.0)
+        }
+    }
+
+    pub fn font_size(&self) -> FontSize {
+        if let Some(ref s) = self.font_size {
+            s.clone()
+        } else {
+            FontSize::Medium
         }
     }
 
@@ -180,6 +203,15 @@ impl BoxInfo {
             bottom,
         }
     }
+}
+
+/// https://docs.gtk.org/Pango/pango_markup.html
+/// align with pango markup syntax
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum FontSize {
+    Small,
+    Medium,
+    Large,
 }
 
 #[derive(Debug, Clone, PartialEq)]

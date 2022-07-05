@@ -1,7 +1,7 @@
 mod browser_window;
 
 use crate::renderer::html::dom::{ElementKind, NodeKind};
-use crate::renderer::layout::render_tree::{RenderObject, RenderTree};
+use crate::renderer::layout::render_tree::{FontSize, RenderObject, RenderTree};
 use browser_window::BrowserWindow;
 use core::cell::RefCell;
 use glib::{clone, closure_local};
@@ -22,6 +22,7 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             ElementKind::Link => {}
             ElementKind::Ul => {}
             ElementKind::Li => {}
+            ElementKind::H1 => {}
             ElementKind::Div => {
                 let width = node.borrow().style.width();
                 let height = node.borrow().style.height();
@@ -47,7 +48,7 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                         (height - padding_bottom) as f64,
                     );
                     cairo_context.set_source_rgb(bg_rgb.0, bg_rgb.1, bg_rgb.2);
-                    cairo_context.fill().expect("failed to fill out div");
+                    cairo_context.fill().expect("failed to fill out <div>");
                 });
                 content_area.append(&div);
             }
@@ -57,10 +58,19 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                 .justify(Justification::Left)
                 .wrap(true)
                 .build();
+
+            // https://docs.gtk.org/Pango/pango_markup.html#text-attributes
+            let mut markup_attrs = String::new();
+
             if let Some(color_name) = node.borrow().style.color().name() {
-                label.set_markup(&format!("<span foreground=\"{color_name}\">{text}</span>"));
+                markup_attrs.push_str(&format!("foreground=\"{color_name}\" "));
             }
 
+            if node.borrow().style.font_size() == FontSize::Large {
+                markup_attrs.push_str(&format!("size=\"x-large\""));
+            }
+
+            label.set_markup(&format!("<span {markup_attrs}>{text}</span>"));
             content_area.append(&label);
         }
     }
@@ -69,7 +79,6 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
 fn paint_dom(node: &Option<Rc<RefCell<RenderObject>>>, content_area: &Box) {
     match node {
         Some(n) => {
-            //println!("{:?} {:?}", n.borrow().kind, n.borrow().style);
             paint_dom_node(n, &content_area);
 
             let child_content_area = Box::new(Orientation::Vertical, 0);

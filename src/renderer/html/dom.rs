@@ -115,6 +115,8 @@ impl Element {
             ElementKind::Li
         } else if name == "div" {
             ElementKind::Div
+        } else if name == "h1" {
+            ElementKind::H1
         } else {
             unimplemented!("not supported this tag name: {}", name);
         }
@@ -140,6 +142,8 @@ impl Element {
             "li".to_string()
         } else if kind == ElementKind::Div {
             "div".to_string()
+        } else if kind == ElementKind::H1 {
+            "h1".to_string()
         } else {
             unimplemented!("not supported this element kind: {:?}", kind);
         }
@@ -168,6 +172,8 @@ pub enum ElementKind {
     Li,
     /// https://html.spec.whatwg.org/multipage/grouping-content.html#the-div-element
     Div,
+    /// https://html.spec.whatwg.org/multipage/sections.html#the-h1,-h2,-h3,-h4,-h5,-and-h6-elements
+    H1,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -543,6 +549,11 @@ impl HtmlParser {
                                 token = self.t.next();
                                 continue;
                             }
+                            if tag == "h1" {
+                                self.insert_element(tag, attributes.to_vec());
+                                token = self.t.next();
+                                continue;
+                            }
                             println!("warning: unknown tag {:?}", tag);
                             token = self.t.next();
                         }
@@ -584,6 +595,11 @@ impl HtmlParser {
                             if tag == "div" {
                                 token = self.t.next();
                                 self.pop_until(ElementKind::Div);
+                                continue;
+                            }
+                            if tag == "h1" {
+                                token = self.t.next();
+                                self.pop_until(ElementKind::H1);
                                 continue;
                             }
                             println!("warning: unknown tag {:?}", tag);
