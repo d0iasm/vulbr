@@ -7,7 +7,7 @@ use core::cell::RefCell;
 use glib::{clone, closure_local};
 use gtk4::glib;
 use gtk4::prelude::*;
-use gtk4::{Application, Box, DrawingArea, Justification, Label, Orientation};
+use gtk4::{Application, Box, DrawingArea, Justification, Label, LinkButton, Orientation};
 use std::rc::Rc;
 
 fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
@@ -21,7 +21,6 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             | ElementKind::Body => {}
             ElementKind::H1 => {}
             ElementKind::P => {}
-            ElementKind::Link => {}
             ElementKind::Ul => {}
             ElementKind::Li => {}
             ElementKind::Div => {
@@ -52,6 +51,14 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                     cairo_context.fill().expect("failed to fill out <div>");
                 });
                 content_area.append(&div);
+            }
+            ElementKind::A => {
+                let link = LinkButton::builder()
+                    .uri("http://example.com")
+                    .label("example.com")
+                    .build();
+
+                content_area.append(&link);
             }
         },
         NodeKind::Text(text) => {

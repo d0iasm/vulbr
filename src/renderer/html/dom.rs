@@ -101,8 +101,6 @@ impl Element {
             ElementKind::Html
         } else if name == "head" {
             ElementKind::Head
-        } else if name == "link" {
-            ElementKind::Link
         } else if name == "style" {
             ElementKind::Style
         } else if name == "script" {
@@ -119,6 +117,8 @@ impl Element {
             ElementKind::Li
         } else if name == "div" {
             ElementKind::Div
+        } else if name == "a" {
+            ElementKind::A
         } else {
             unimplemented!("not supported this tag name: {}", name);
         }
@@ -130,8 +130,6 @@ impl Element {
             "html".to_string()
         } else if kind == ElementKind::Head {
             "head".to_string()
-        } else if kind == ElementKind::Link {
-            "link".to_string()
         } else if kind == ElementKind::Style {
             "style".to_string()
         } else if kind == ElementKind::Script {
@@ -148,13 +146,14 @@ impl Element {
             "li".to_string()
         } else if kind == ElementKind::Div {
             "div".to_string()
+        } else if kind == ElementKind::A {
+            "a".to_string()
         } else {
             unimplemented!("not supported this element kind: {:?}", kind);
         }
     }
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 /// https://dom.spec.whatwg.org/#interface-element
 pub enum ElementKind {
@@ -162,8 +161,6 @@ pub enum ElementKind {
     Html,
     /// https://html.spec.whatwg.org/multipage/semantics.html#the-head-element
     Head,
-    /// https://html.spec.whatwg.org/multipage/semantics.html#the-link-element
-    Link,
     /// https://html.spec.whatwg.org/multipage/semantics.html#the-style-element
     Style,
     /// https://html.spec.whatwg.org/multipage/scripting.html#the-script-element
@@ -180,6 +177,8 @@ pub enum ElementKind {
     Li,
     /// https://html.spec.whatwg.org/multipage/grouping-content.html#the-div-element
     Div,
+    /// https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-a-element
+    A,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -456,14 +455,6 @@ impl HtmlParser {
                             self_closing: _,
                             ref attributes,
                         }) => {
-                            if tag == "link" {
-                                self.insert_element("link", attributes.to_vec());
-                                // Immediately pop the current node off the stack of open elements.
-                                assert!(self.pop_current_node(ElementKind::Link));
-                                token = self.t.next();
-                                continue;
-                            }
-
                             if tag == "style" {
                                 self.insert_element(tag, attributes.to_vec());
                                 self.original_insertion_mode = self.mode;
@@ -471,7 +462,6 @@ impl HtmlParser {
                                 token = self.t.next();
                                 continue;
                             }
-
                             if tag == "script" {
                                 self.insert_element(tag, attributes.to_vec());
                                 self.original_insertion_mode = self.mode;
@@ -565,6 +555,11 @@ impl HtmlParser {
                                 token = self.t.next();
                                 continue;
                             }
+                            if tag == "a" {
+                                self.insert_element(tag, attributes.to_vec());
+                                token = self.t.next();
+                                continue;
+                            }
                             println!("warning: unknown tag {:?}", tag);
                             token = self.t.next();
                         }
@@ -616,6 +611,11 @@ impl HtmlParser {
                             if tag == "p" {
                                 token = self.t.next();
                                 self.pop_until(ElementKind::P);
+                                continue;
+                            }
+                            if tag == "a" {
+                                token = self.t.next();
+                                self.pop_until(ElementKind::A);
                                 continue;
                             }
                             println!("warning: unknown tag {:?}", tag);
