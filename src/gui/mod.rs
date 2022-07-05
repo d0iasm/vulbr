@@ -112,6 +112,7 @@ fn paint_render_tree(obj: &Option<Rc<RefCell<RenderObject>>>, content_area: &Box
             let child_content_area = Box::builder()
                 .valign(Align::Start)
                 .halign(Align::Start)
+                .width_request(o.borrow().style.width() as i32)
                 .orientation(orientation)
                 .build();
             content_area.append(&child_content_area);
