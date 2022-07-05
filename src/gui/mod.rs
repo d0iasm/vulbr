@@ -19,10 +19,11 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             | ElementKind::Style
             | ElementKind::Script
             | ElementKind::Body => {}
+            ElementKind::H1 => {}
+            ElementKind::P => {}
             ElementKind::Link => {}
             ElementKind::Ul => {}
             ElementKind::Li => {}
-            ElementKind::H1 => {}
             ElementKind::Div => {
                 let width = node.borrow().style.width();
                 let height = node.borrow().style.height();

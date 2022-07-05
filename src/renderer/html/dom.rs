@@ -109,14 +109,16 @@ impl Element {
             ElementKind::Script
         } else if name == "body" {
             ElementKind::Body
+        } else if name == "h1" {
+            ElementKind::H1
+        } else if name == "p" {
+            ElementKind::P
         } else if name == "ul" {
             ElementKind::Ul
         } else if name == "li" {
             ElementKind::Li
         } else if name == "div" {
             ElementKind::Div
-        } else if name == "h1" {
-            ElementKind::H1
         } else {
             unimplemented!("not supported this tag name: {}", name);
         }
@@ -136,14 +138,16 @@ impl Element {
             "script".to_string()
         } else if kind == ElementKind::Body {
             "body".to_string()
+        } else if kind == ElementKind::H1 {
+            "h1".to_string()
+        } else if kind == ElementKind::P {
+            "p".to_string()
         } else if kind == ElementKind::Ul {
             "ul".to_string()
         } else if kind == ElementKind::Li {
             "li".to_string()
         } else if kind == ElementKind::Div {
             "div".to_string()
-        } else if kind == ElementKind::H1 {
-            "h1".to_string()
         } else {
             unimplemented!("not supported this element kind: {:?}", kind);
         }
@@ -166,14 +170,16 @@ pub enum ElementKind {
     Script,
     /// https://html.spec.whatwg.org/multipage/sections.html#the-body-element
     Body,
+    /// https://html.spec.whatwg.org/multipage/sections.html#the-h1,-h2,-h3,-h4,-h5,-and-h6-elements
+    H1,
+    /// https://html.spec.whatwg.org/multipage/grouping-content.html#the-p-element
+    P,
     /// https://html.spec.whatwg.org/multipage/grouping-content.html#the-ul-element
     Ul,
     /// https://html.spec.whatwg.org/multipage/grouping-content.html#the-li-element
     Li,
     /// https://html.spec.whatwg.org/multipage/grouping-content.html#the-div-element
     Div,
-    /// https://html.spec.whatwg.org/multipage/sections.html#the-h1,-h2,-h3,-h4,-h5,-and-h6-elements
-    H1,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -554,6 +560,11 @@ impl HtmlParser {
                                 token = self.t.next();
                                 continue;
                             }
+                            if tag == "p" {
+                                self.insert_element(tag, attributes.to_vec());
+                                token = self.t.next();
+                                continue;
+                            }
                             println!("warning: unknown tag {:?}", tag);
                             token = self.t.next();
                         }
@@ -600,6 +611,11 @@ impl HtmlParser {
                             if tag == "h1" {
                                 token = self.t.next();
                                 self.pop_until(ElementKind::H1);
+                                continue;
+                            }
+                            if tag == "p" {
+                                token = self.t.next();
+                                self.pop_until(ElementKind::P);
                                 continue;
                             }
                             println!("warning: unknown tag {:?}", tag);
