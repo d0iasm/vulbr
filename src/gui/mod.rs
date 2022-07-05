@@ -11,7 +11,7 @@ use gtk4::{Application, Box, DrawingArea, Justification, Label, LinkButton, Orie
 use std::rc::Rc;
 
 fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
-    match &node.borrow().kind {
+    match &node.borrow().kind() {
         NodeKind::Document => {}
         NodeKind::Element(element) => match element.kind {
             ElementKind::Html

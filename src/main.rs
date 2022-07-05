@@ -24,7 +24,7 @@ fn print_dom(node: &Option<Rc<RefCell<Node>>>, depth: usize) {
     match node {
         Some(n) => {
             print!("{}", "  ".repeat(depth));
-            println!("{:?}", n.borrow().kind);
+            println!("{:?}", n.borrow().kind());
             print_dom(&n.borrow().first_child(), depth + 1);
             print_dom(&n.borrow().next_sibling(), depth);
         }
@@ -37,7 +37,7 @@ fn print_render_object(node: &Option<Rc<RefCell<RenderObject>>>, depth: usize) {
     match node {
         Some(n) => {
             print!("{}", "  ".repeat(depth));
-            println!("{:?} {:?}", n.borrow().kind, n.borrow().style);
+            println!("{:?} {:?}", n.borrow().kind(), n.borrow().style);
             print_render_object(&n.borrow().first_child(), depth + 1);
             print_render_object(&n.borrow().next_sibling(), depth);
         }

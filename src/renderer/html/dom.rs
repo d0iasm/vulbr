@@ -12,12 +12,12 @@ use std::vec::Vec;
 #[derive(Debug, Clone)]
 /// https://dom.spec.whatwg.org/#interface-node
 pub struct Node {
-    pub kind: NodeKind,
-    pub parent: Option<Weak<RefCell<Node>>>,
-    pub first_child: Option<Rc<RefCell<Node>>>,
-    pub last_child: Option<Weak<RefCell<Node>>>,
-    pub previous_sibling: Option<Weak<RefCell<Node>>>,
-    pub next_sibling: Option<Rc<RefCell<Node>>>,
+    kind: NodeKind,
+    parent: Option<Weak<RefCell<Node>>>,
+    first_child: Option<Rc<RefCell<Node>>>,
+    last_child: Option<Weak<RefCell<Node>>>,
+    previous_sibling: Option<Weak<RefCell<Node>>>,
+    next_sibling: Option<Rc<RefCell<Node>>>,
 }
 
 ///dom.spec.whatwg.org/#interface-node
@@ -31,6 +31,10 @@ impl Node {
             previous_sibling: None,
             next_sibling: None,
         }
+    }
+
+    pub fn kind(&self) -> NodeKind {
+        self.kind.clone()
     }
 
     pub fn first_child(&self) -> Option<Rc<RefCell<Node>>> {

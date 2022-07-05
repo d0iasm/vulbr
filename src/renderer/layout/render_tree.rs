@@ -5,7 +5,7 @@ use crate::renderer::css::cssom::*;
 use crate::renderer::html::dom::*;
 use crate::renderer::layout::color::*;
 use core::cell::RefCell;
-use std::rc::{Rc, Weak};
+use std::rc::Rc;
 use std::vec::Vec;
 
 #[allow(dead_code)]
@@ -36,7 +36,7 @@ impl RenderStyle {
     }
 
     fn default_display_type(node: &Rc<RefCell<Node>>) -> DisplayType {
-        match &node.borrow().kind {
+        match &node.borrow().kind() {
             NodeKind::Element(element) => match element.kind {
                 ElementKind::Html | ElementKind::Div | ElementKind::Ul | ElementKind::Li => {
                     DisplayType::Block
@@ -51,7 +51,7 @@ impl RenderStyle {
     }
 
     fn default_font_size(node: &Rc<RefCell<Node>>) -> Option<FontSize> {
-        match &node.borrow().kind {
+        match &node.borrow().kind() {
             NodeKind::Element(element) => match element.kind {
                 ElementKind::H1 => Some(FontSize::XXLarge),
                 _ => None,
@@ -230,10 +230,8 @@ impl LayoutPosition {
 #[derive(Debug, Clone)]
 pub struct RenderObject {
     // Similar structure with Node in renderer/dom.rs.
-    pub kind: NodeKind,
+    node: Rc<RefCell<Node>>,
     first_child: Option<Rc<RefCell<RenderObject>>>,
-    _last_child: Option<Weak<RefCell<RenderObject>>>,
-    _previous_sibling: Option<Weak<RefCell<RenderObject>>>,
     next_sibling: Option<Rc<RefCell<RenderObject>>>,
     // CSS information.
     pub style: RenderStyle,
@@ -244,14 +242,16 @@ pub struct RenderObject {
 impl RenderObject {
     fn new(node: Rc<RefCell<Node>>) -> Self {
         Self {
-            kind: node.borrow().kind.clone(),
+            node: node.clone(),
             first_child: None,
-            _last_child: None,
-            _previous_sibling: None,
             next_sibling: None,
             style: RenderStyle::new(&node),
             position: LayoutPosition::new(0.0, 0.0),
         }
+    }
+
+    pub fn kind(&self) -> NodeKind {
+        self.node.borrow().kind().clone()
     }
 
     pub fn first_child(&self) -> Option<Rc<RefCell<RenderObject>>> {
@@ -370,7 +370,7 @@ impl RenderObject {
     }
 
     fn is_node_selected(&self, selector: &Selector) -> bool {
-        match &self.kind {
+        match &self.kind() {
             NodeKind::Element(e) => match selector {
                 Selector::TypeSelector(type_name) => {
                     if Element::element_kind_to_string(e.kind) == *type_name {
@@ -501,7 +501,7 @@ impl RenderTree {
                 // if the original next sibling node is "display:none" and the original next
                 // sibling node has a next sibling node, treat the next sibling node as a new next
                 // sibling node.
-                if next_sibling.is_none() && n.borrow().next_sibling.is_some() {
+                if next_sibling.is_none() && n.borrow().next_sibling().is_some() {
                     let mut original_dom_node = original_next_sibling
                         .expect("first child should exist")
                         .borrow()
