@@ -8,7 +8,6 @@ use core::cell::RefCell;
 use std::rc::Rc;
 use std::vec::Vec;
 
-#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct RenderStyle {
     background_color: Option<Color>,
@@ -37,22 +36,27 @@ impl RenderStyle {
 
     fn default_display_type(node: &Rc<RefCell<Node>>) -> DisplayType {
         match &node.borrow().kind() {
-            NodeKind::Element(element) => match element.kind {
-                ElementKind::Html | ElementKind::Div | ElementKind::Ul | ElementKind::Li => {
-                    DisplayType::Block
-                }
+            NodeKind::Document => DisplayType::Block,
+            NodeKind::Element(element) => match element.kind() {
+                ElementKind::Html
+                | ElementKind::Body
+                | ElementKind::Div
+                | ElementKind::Ul
+                | ElementKind::Li
+                | ElementKind::H1
+                | ElementKind::P => DisplayType::Block,
                 ElementKind::Script | ElementKind::Head | ElementKind::Style => {
                     DisplayType::DisplayNone
                 }
                 _ => DisplayType::Inline,
             },
-            _ => DisplayType::Inline,
+            NodeKind::Text(_) => DisplayType::Inline,
         }
     }
 
     fn default_font_size(node: &Rc<RefCell<Node>>) -> Option<FontSize> {
         match &node.borrow().kind() {
-            NodeKind::Element(element) => match element.kind {
+            NodeKind::Element(element) => match element.kind() {
                 ElementKind::H1 => Some(FontSize::XXLarge),
                 _ => None,
             },
@@ -180,7 +184,9 @@ impl RenderStyle {
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum DisplayType {
+    /// https://www.w3.org/TR/css-display-3/#valdef-display-block
     Block,
+    /// https://www.w3.org/TR/css-display-3/#valdef-display-inline
     Inline,
     /// https://www.w3.org/TR/css-display-3/#valdef-display-none
     DisplayNone,
@@ -373,13 +379,13 @@ impl RenderObject {
         match &self.kind() {
             NodeKind::Element(e) => match selector {
                 Selector::TypeSelector(type_name) => {
-                    if Element::element_kind_to_string(e.kind) == *type_name {
+                    if Element::element_kind_to_string(e.kind()) == *type_name {
                         return true;
                     }
                     return false;
                 }
                 Selector::ClassSelector(class_name) => {
-                    for attr in &e.attributes {
+                    for attr in &e.attributes() {
                         if attr.name == "class" && attr.value == *class_name {
                             return true;
                         }
@@ -387,7 +393,7 @@ impl RenderObject {
                     return false;
                 }
                 Selector::IdSelector(id_name) => {
-                    for attr in &e.attributes {
+                    for attr in &e.attributes() {
                         if attr.name == "id" && attr.value == *id_name {
                             return true;
                         }

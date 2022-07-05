@@ -1,7 +1,7 @@
 //! This is a part of "13.2.5 Tokenization" in the HTML spec.
 //! https://html.spec.whatwg.org/multipage/parsing.html#tokenization
 
-use crate::renderer::html::Attribute;
+use crate::renderer::html::attribute::Attribute;
 use core::assert;
 use core::iter::Iterator;
 use std::string::String;

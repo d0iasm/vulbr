@@ -1,8 +1,8 @@
 //! This is a part of "13.2.6 Tree construction" in the HTML spec.
 //! https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
 
+use crate::renderer::html::attribute::Attribute;
 use crate::renderer::html::token::{HtmlToken, HtmlTokenizer};
-use crate::renderer::html::Attribute;
 use core::cell::RefCell;
 use std::rc::{Rc, Weak};
 use std::string::String;
@@ -90,8 +90,8 @@ impl Eq for NodeKind {}
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// https://dom.spec.whatwg.org/#interface-element
 pub struct Element {
-    pub kind: ElementKind,
-    pub attributes: Vec<Attribute>,
+    kind: ElementKind,
+    attributes: Vec<Attribute>,
 }
 
 impl Element {
@@ -155,6 +155,14 @@ impl Element {
         } else {
             unimplemented!("not supported this element kind: {:?}", kind);
         }
+    }
+
+    pub fn kind(&self) -> ElementKind {
+        self.kind
+    }
+
+    pub fn attributes(&self) -> Vec<Attribute> {
+        self.attributes.clone()
     }
 }
 

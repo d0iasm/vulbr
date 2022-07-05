@@ -1,19 +1,19 @@
 mod browser_window;
 
 use crate::renderer::html::dom::{ElementKind, NodeKind};
-use crate::renderer::layout::render_tree::{FontSize, RenderObject, RenderTree};
+use crate::renderer::layout::render_tree::{DisplayType, FontSize, RenderObject, RenderTree};
 use browser_window::BrowserWindow;
 use core::cell::RefCell;
 use glib::{clone, closure_local};
 use gtk4::glib;
 use gtk4::prelude::*;
-use gtk4::{Application, Box, DrawingArea, Justification, Label, LinkButton, Orientation};
+use gtk4::{Align, Application, Box, DrawingArea, Justification, Label, LinkButton, Orientation};
 use std::rc::Rc;
 
-fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
-    match &node.borrow().kind() {
+fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
+    match &obj.borrow().kind() {
         NodeKind::Document => {}
-        NodeKind::Element(element) => match element.kind {
+        NodeKind::Element(element) => match element.kind() {
             ElementKind::Html
             | ElementKind::Head
             | ElementKind::Style
@@ -24,22 +24,22 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             ElementKind::Ul => {}
             ElementKind::Li => {}
             ElementKind::Div => {
-                let width = node.borrow().style.width();
-                let height = node.borrow().style.height();
+                let width = obj.borrow().style.width();
+                let height = obj.borrow().style.height();
                 let div = DrawingArea::builder()
                     .content_height(height as i32)
                     .content_width(width as i32)
-                    .margin_start(node.borrow().style.margin_left() as i32)
-                    .margin_top(node.borrow().style.margin_top() as i32)
-                    .margin_end(node.borrow().style.margin_right() as i32)
-                    .margin_bottom(node.borrow().style.margin_bottom() as i32)
+                    .margin_start(obj.borrow().style.margin_left() as i32)
+                    .margin_top(obj.borrow().style.margin_top() as i32)
+                    .margin_end(obj.borrow().style.margin_right() as i32)
+                    .margin_bottom(obj.borrow().style.margin_bottom() as i32)
                     .build();
 
-                let bg_rgb = node.borrow().style.background_color().rgb();
-                let padding_top = node.borrow().style.padding_top();
-                let padding_right = node.borrow().style.padding_right();
-                let padding_bottom = node.borrow().style.padding_bottom();
-                let padding_left = node.borrow().style.padding_left();
+                let bg_rgb = obj.borrow().style.background_color().rgb();
+                let padding_top = obj.borrow().style.padding_top();
+                let padding_right = obj.borrow().style.padding_right();
+                let padding_bottom = obj.borrow().style.padding_bottom();
+                let padding_left = obj.borrow().style.padding_left();
                 div.set_draw_func(move |_drawing_area, cairo_context, _w, _h| {
                     cairo_context.rectangle(
                         padding_left as f64,
@@ -53,10 +53,21 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                 content_area.append(&div);
             }
             ElementKind::A => {
-                let link = LinkButton::builder()
-                    .uri("http://example.com")
-                    .label("example.com")
-                    .build();
+                let link = LinkButton::builder().build();
+
+                let attrs = match obj.borrow().kind() {
+                    NodeKind::Element(element) => match element.kind() {
+                        ElementKind::A => element.attributes(),
+                        _ => Vec::new(),
+                    },
+                    _ => Vec::new(),
+                };
+
+                for attr in attrs {
+                    if attr.name == "href" {
+                        link.set_uri(&attr.value);
+                    }
+                }
 
                 content_area.append(&link);
             }
@@ -70,11 +81,11 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             // https://docs.gtk.org/Pango/pango_markup.html#text-attributes
             let mut markup_attrs = String::new();
 
-            if let Some(color_name) = node.borrow().style.color().name() {
+            if let Some(color_name) = obj.borrow().style.color().name() {
                 markup_attrs.push_str(&format!("foreground=\"{color_name}\" "));
             }
 
-            if node.borrow().style.font_size() == FontSize::XXLarge {
+            if obj.borrow().style.font_size() == FontSize::XXLarge {
                 markup_attrs.push_str(&format!("size=\"xx-large\""));
             }
 
@@ -87,15 +98,26 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
     }
 }
 
-fn paint_dom(node: &Option<Rc<RefCell<RenderObject>>>, content_area: &Box) {
-    match node {
-        Some(n) => {
-            paint_dom_node(n, &content_area);
+fn paint_render_tree(obj: &Option<Rc<RefCell<RenderObject>>>, content_area: &Box) {
+    match obj {
+        Some(o) => {
+            paint_render_object(o, &content_area);
 
-            let child_content_area = Box::new(Orientation::Vertical, 0);
+            let orientation = if o.borrow().style.display() == DisplayType::Inline {
+                Orientation::Horizontal
+            } else {
+                Orientation::Vertical
+            };
+
+            let child_content_area = Box::builder()
+                .valign(Align::Start)
+                .halign(Align::Start)
+                .orientation(orientation)
+                .build();
             content_area.append(&child_content_area);
-            paint_dom(&n.borrow().first_child(), &child_content_area);
-            paint_dom(&n.borrow().next_sibling(), content_area);
+
+            paint_render_tree(&o.borrow().first_child(), &child_content_area);
+            paint_render_tree(&o.borrow().next_sibling(), content_area);
         }
         None => return,
     }
@@ -113,7 +135,7 @@ pub fn start_browser_window(handle_input: fn(String) -> RenderTree) {
             window.connect_closure("start-handle-input", false, closure_local!(move |window: BrowserWindow, url: String| {
                 println!("start-handle-input {:?}", url);
                 let render_tree = handle_input(url);
-                paint_dom(&render_tree.root, &window.get_content_area());
+                paint_render_tree(&render_tree.root, &window.get_content_area());
             }));
 
             window.show();
