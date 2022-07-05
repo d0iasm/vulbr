@@ -67,9 +67,12 @@ fn paint_dom_node(node: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                 markup_attrs.push_str(&format!("foreground=\"{color_name}\" "));
             }
 
-            if node.borrow().style.font_size() == FontSize::Large {
-                markup_attrs.push_str(&format!("size=\"x-large\""));
+            if node.borrow().style.font_size() == FontSize::XXLarge {
+                markup_attrs.push_str(&format!("size=\"xx-large\""));
             }
+
+            // TODO: investigate why this needs.
+            label.set_xalign(0.0);
 
             label.set_markup(&format!("<span {markup_attrs}>{text}</span>"));
             content_area.append(&label);

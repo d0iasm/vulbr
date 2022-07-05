@@ -53,7 +53,7 @@ impl RenderStyle {
     fn default_font_size(node: &Rc<RefCell<Node>>) -> Option<FontSize> {
         match &node.borrow().kind {
             NodeKind::Element(element) => match element.kind {
-                ElementKind::H1 => Some(FontSize::Large),
+                ElementKind::H1 => Some(FontSize::XXLarge),
                 _ => None,
             },
             _ => None,
@@ -205,13 +205,14 @@ impl BoxInfo {
     }
 }
 
+/// https://www.w3.org/TR/css-fonts-4/#absolute-size-mapping
 /// https://docs.gtk.org/Pango/pango_markup.html
 /// align with pango markup syntax
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum FontSize {
-    Small,
     Medium,
-    Large,
+    _XLarge,
+    XXLarge,
 }
 
 #[derive(Debug, Clone, PartialEq)]
