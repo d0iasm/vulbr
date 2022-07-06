@@ -7,7 +7,9 @@ use core::cell::RefCell;
 use glib::{clone, closure_local};
 use gtk4::glib;
 use gtk4::prelude::*;
-use gtk4::{Align, Application, Box, DrawingArea, Justification, Label, LinkButton, Orientation};
+use gtk4::{
+    Align, Application, Box, DrawingArea, Justification, Label, LinkButton, ListBox, Orientation,
+};
 use std::rc::Rc;
 
 fn should_create_new_box(kind: &NodeKind) -> bool {
@@ -19,9 +21,9 @@ fn should_create_new_box(kind: &NodeKind) -> bool {
             | ElementKind::Style
             | ElementKind::Script
             | ElementKind::H1
-            | ElementKind::P
-            | ElementKind::Ul
-            | ElementKind::Li => false,
+            | ElementKind::P => false,
+            // TODO: correct?
+            ElementKind::Li | ElementKind::Ul => true,
             ElementKind::Body | ElementKind::Div | ElementKind::A => true,
         },
         NodeKind::Text(_) => true,
@@ -38,9 +40,18 @@ fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             | ElementKind::Script
             | ElementKind::H1
             | ElementKind::P
-            | ElementKind::Ul
-            | ElementKind::Li
             | ElementKind::Body => {}
+            ElementKind::Li => {
+                let bullet = Label::builder()
+                    .label("•")
+                    .justify(Justification::Left)
+                    .build();
+                content_area.append(&bullet);
+            }
+            ElementKind::Ul => {
+                let list_box = ListBox::new();
+                content_area.append(&list_box);
+            }
             ElementKind::Div => {
                 let width = obj.borrow().style.width();
                 let height = obj.borrow().style.height();
