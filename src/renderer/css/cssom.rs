@@ -323,11 +323,6 @@ impl CssParser {
 
             match token {
                 CssToken::OpenCurly => {
-                    println!(
-                        "consume_at_rule open curly: {:?} {:?}",
-                        token,
-                        self.t.peek()
-                    );
                     //TODO: set rule to AtRule.
                     let _qualified_rule = self.consume_qualified_rule();
                     // consume the close curly for a AtRule block

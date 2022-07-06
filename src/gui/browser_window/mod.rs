@@ -1,6 +1,7 @@
 mod imp;
 
 use glib::{clone, Object};
+use gtk4::gio::SimpleAction;
 use gtk4::prelude::*;
 use gtk4::subclass::prelude::*;
 use gtk4::{gio, glib, Application};
@@ -25,6 +26,23 @@ impl BrowserWindow {
                 window.emit_by_name::<()>("start-handle-input", &[&entry.text().to_string()]);
                 entry.set_text("");
             }));
+    }
+
+    fn setup_actions(&self) {
+        let action_count = SimpleAction::new("clicked", Some(&String::static_variant_type()));
+
+        action_count.connect_activate(clone!(@weak self as window => move |_action, parameter| {
+            let uri = parameter
+                .expect("Could not get parameter.")
+                .get::<String>()
+                .expect("The value needs to be of type `String`.");
+
+            println!("link clicked and moving to {:?}", uri);
+
+            window.clear_content_area();
+            window.emit_by_name::<()>("start-handle-input", &[&uri]);
+        }));
+        self.add_action(&action_count);
     }
 
     pub fn get_content_area(&self) -> gtk4::Box {

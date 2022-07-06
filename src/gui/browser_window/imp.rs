@@ -35,6 +35,7 @@ impl ObjectImpl for BrowserWindow {
         self.parent_constructed(obj);
 
         obj.setup_callbacks();
+        obj.setup_actions();
     }
 
     fn signals() -> &'static [Signal] {

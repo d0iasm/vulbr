@@ -8,7 +8,8 @@ use glib::{clone, closure_local};
 use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::{
-    Align, Application, Box, DrawingArea, Justification, Label, LinkButton, ListBox, Orientation,
+    Align, Application, Box, DrawingArea, Inhibit, Justification, Label, LinkButton, ListBox,
+    Orientation,
 };
 use std::rc::Rc;
 
@@ -30,7 +31,11 @@ fn should_create_new_box(kind: &NodeKind) -> bool {
     }
 }
 
-fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
+fn paint_render_object(
+    obj: &Rc<RefCell<RenderObject>>,
+    content_area: &Box,
+    window: &BrowserWindow,
+) {
     match &obj.borrow().kind() {
         NodeKind::Document => {}
         NodeKind::Element(element) => match element.kind() {
@@ -103,6 +108,15 @@ fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                     }
                 }
 
+                link.connect_activate_link(move |link| {
+                    let uri: String = link.property("uri");
+
+                    link.activate_action("win.clicked", Some(&uri.to_variant()))
+                        .expect("failed to fire win.clicked action");
+
+                    return Inhibit(true);
+                });
+
                 content_area.append(&link);
             }
         },
@@ -151,10 +165,14 @@ fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
     }
 }
 
-fn paint_render_tree(obj: &Option<Rc<RefCell<RenderObject>>>, parent_content_area: &Box) {
+fn paint_render_tree(
+    obj: &Option<Rc<RefCell<RenderObject>>>,
+    parent_content_area: &Box,
+    window: &BrowserWindow,
+) {
     match obj {
         Some(o) => {
-            paint_render_object(o, &parent_content_area);
+            paint_render_object(o, &parent_content_area, window);
 
             if should_create_new_box(&o.borrow().kind()) {
                 let new_content_area = if o.borrow().style.display() == DisplayType::Inline {
@@ -174,11 +192,11 @@ fn paint_render_tree(obj: &Option<Rc<RefCell<RenderObject>>>, parent_content_are
 
                 parent_content_area.append(&new_content_area);
 
-                paint_render_tree(&o.borrow().first_child(), &new_content_area);
-                paint_render_tree(&o.borrow().next_sibling(), parent_content_area);
+                paint_render_tree(&o.borrow().first_child(), &new_content_area, window);
+                paint_render_tree(&o.borrow().next_sibling(), parent_content_area, window);
             } else {
-                paint_render_tree(&o.borrow().first_child(), parent_content_area);
-                paint_render_tree(&o.borrow().next_sibling(), parent_content_area);
+                paint_render_tree(&o.borrow().first_child(), parent_content_area, window);
+                paint_render_tree(&o.borrow().next_sibling(), parent_content_area, window);
             }
         }
         None => return,
@@ -189,15 +207,15 @@ pub fn start_browser_window(handle_input: fn(String) -> RenderTree) {
     let application = Application::builder().application_id("vulbr").build();
 
     application.connect_activate(
-        clone!(@strong application, @strong handle_input => move |app| {
-            let window = BrowserWindow::new(app);
+        clone!(@strong application, @strong handle_input => move |_| {
+            let window = BrowserWindow::new(&application);
             window.set_default_size(1280, 800);
             window.set_title(Some("vulbr"));
 
             window.connect_closure("start-handle-input", false, closure_local!(move |window: BrowserWindow, url: String| {
                 println!("start-handle-input {:?}", url);
                 let render_tree = handle_input(url);
-                paint_render_tree(&render_tree.root, &window.get_content_area());
+                paint_render_tree(&render_tree.root, &window.get_content_area(), &window);
             }));
 
             window.show();
