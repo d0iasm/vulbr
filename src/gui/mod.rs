@@ -10,6 +10,24 @@ use gtk4::prelude::*;
 use gtk4::{Align, Application, Box, DrawingArea, Justification, Label, LinkButton, Orientation};
 use std::rc::Rc;
 
+fn should_create_new_box(kind: &NodeKind) -> bool {
+    match kind {
+        NodeKind::Document => false,
+        NodeKind::Element(element) => match element.kind() {
+            ElementKind::Html
+            | ElementKind::Head
+            | ElementKind::Style
+            | ElementKind::Script
+            | ElementKind::H1
+            | ElementKind::P
+            | ElementKind::Ul
+            | ElementKind::Li => false,
+            ElementKind::Body | ElementKind::Div | ElementKind::A => true,
+        },
+        NodeKind::Text(_) => true,
+    }
+}
+
 fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
     match &obj.borrow().kind() {
         NodeKind::Document => {}
@@ -18,11 +36,11 @@ fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             | ElementKind::Head
             | ElementKind::Style
             | ElementKind::Script
+            | ElementKind::H1
+            | ElementKind::P
+            | ElementKind::Ul
+            | ElementKind::Li
             | ElementKind::Body => {}
-            ElementKind::H1 => {}
-            ElementKind::P => {}
-            ElementKind::Ul => {}
-            ElementKind::Li => {}
             ElementKind::Div => {
                 let width = obj.borrow().style.width();
                 let height = obj.borrow().style.height();
@@ -73,6 +91,12 @@ fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             }
         },
         NodeKind::Text(text) => {
+            println!("parent: {:?}", content_area.parent());
+            println!(
+                "parent's child: {:?}",
+                content_area.parent().unwrap().first_child()
+            );
+
             let label = Label::builder()
                 .justify(Justification::Left)
                 .wrap(true)
@@ -98,27 +122,35 @@ fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
     }
 }
 
-fn paint_render_tree(obj: &Option<Rc<RefCell<RenderObject>>>, content_area: &Box) {
+fn paint_render_tree(obj: &Option<Rc<RefCell<RenderObject>>>, parent_content_area: &Box) {
     match obj {
         Some(o) => {
-            paint_render_object(o, &content_area);
+            paint_render_object(o, &parent_content_area);
 
-            let orientation = if o.borrow().style.display() == DisplayType::Inline {
-                Orientation::Horizontal
+            if should_create_new_box(&o.borrow().kind()) {
+                let new_content_area = if o.borrow().style.display() == DisplayType::Inline {
+                    Box::builder()
+                        .valign(Align::Start)
+                        .halign(Align::Start)
+                        .orientation(Orientation::Horizontal)
+                        .build()
+                } else {
+                    Box::builder()
+                        .valign(Align::Start)
+                        .halign(Align::Start)
+                        .width_request(o.borrow().style.width() as i32)
+                        .orientation(Orientation::Vertical)
+                        .build()
+                };
+
+                parent_content_area.append(&new_content_area);
+
+                paint_render_tree(&o.borrow().first_child(), &new_content_area);
+                paint_render_tree(&o.borrow().next_sibling(), parent_content_area);
             } else {
-                Orientation::Vertical
-            };
-
-            let child_content_area = Box::builder()
-                .valign(Align::Start)
-                .halign(Align::Start)
-                .width_request(o.borrow().style.width() as i32)
-                .orientation(orientation)
-                .build();
-            content_area.append(&child_content_area);
-
-            paint_render_tree(&o.borrow().first_child(), &child_content_area);
-            paint_render_tree(&o.borrow().next_sibling(), content_area);
+                paint_render_tree(&o.borrow().first_child(), parent_content_area);
+                paint_render_tree(&o.borrow().next_sibling(), parent_content_area);
+            }
         }
         None => return,
     }
