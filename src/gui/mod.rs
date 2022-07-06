@@ -71,7 +71,12 @@ fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                 content_area.append(&div);
             }
             ElementKind::A => {
-                let link = LinkButton::builder().build();
+                let link = LinkButton::builder()
+                    .margin_start(obj.borrow().style.margin_left() as i32)
+                    .margin_top(obj.borrow().style.margin_top() as i32)
+                    .margin_end(obj.borrow().style.margin_right() as i32)
+                    .margin_bottom(obj.borrow().style.margin_bottom() as i32)
+                    .build();
 
                 let attrs = match obj.borrow().kind() {
                     NodeKind::Element(element) => match element.kind() {
@@ -91,11 +96,24 @@ fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             }
         },
         NodeKind::Text(text) => {
-            println!("parent: {:?}", content_area.parent());
-            println!(
-                "parent's child: {:?}",
-                content_area.parent().unwrap().first_child()
-            );
+            // Note: this is a hacky way to update label in <a>. This assumes the following
+            // structure.
+            // |------------------|     |--------------------|
+            // | parent_box (Box) | --> | child (LinkButton) |
+            // |------------------| |   |--------------------|
+            //                      |
+            //                      |   |--------------------|
+            //                      --> | content_area (Box) |
+            //                          |--------------------|
+            // Consider smarter implementation
+            if let Some(parent_box) = content_area.parent() {
+                if let Some(child) = parent_box.first_child() {
+                    if child.type_().to_string() == "GtkLinkButton" {
+                        child.set_property("label", text);
+                        return;
+                    }
+                }
+            }
 
             let label = Label::builder()
                 .justify(Justification::Left)
