@@ -180,12 +180,13 @@ impl CssParser {
         match token {
             CssToken::Ident(ident) => ComponentValue::Keyword(ident.to_string()),
             CssToken::Number(num) => ComponentValue::Number(num.clone()),
+            // TODO(work/2-2.html): support color code (e.g. "#ffffff")
             _ => {
                 println!(
                     "warning: token {:?} as a component value is not supported yet",
                     token
                 );
-                // TODO: implement it correctly.
+                // TODO: implement it correctly
                 return ComponentValue::Keyword("red".to_string());
                 //panic!("Parse error: {:?} is an unexpected token.", token);
             }
