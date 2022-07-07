@@ -25,7 +25,6 @@ impl Program {
     }
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Node {
     /// https://github.com/estree/estree/blob/master/es5.md#expressionstatement
@@ -54,6 +53,11 @@ pub enum Node {
         left: Option<Rc<Node>>,
         right: Option<Rc<Node>>,
     },
+    /// https://github.com/estree/estree/blob/master/es5.md#memberexpression
+    MemberExpression {
+        object: Option<Rc<Node>>,
+        property: Option<Rc<Node>>,
+    },
     /// https://github.com/estree/estree/blob/master/es5.md#callexpression
     CallExpression {
         callee: Option<Rc<Node>>,
@@ -71,7 +75,7 @@ pub enum Node {
 }
 
 impl Node {
-    pub fn new_binary_expr(
+    pub fn new_binary_expression(
         operator: char,
         left: Option<Rc<Node>>,
         right: Option<Rc<Node>>,
@@ -114,6 +118,13 @@ impl Node {
         Some(Rc::new(Node::VariableDeclaration { declarations }))
     }
 
+    pub fn new_member_expression(
+        object: Option<Rc<Self>>,
+        property: Option<Rc<Self>>,
+    ) -> Option<Rc<Self>> {
+        Some(Rc::new(Node::MemberExpression { object, property }))
+    }
+
     pub fn new_call_expression(
         callee: Option<Rc<Self>>,
         arguments: Vec<Option<Rc<Self>>>,
@@ -153,47 +164,55 @@ impl JsParser {
     ///                     | Identifier
     ///                     | ArrayLiteral
     ///                     | Literal
-    ///
-    /// MemberExpression ::= ( ( FunctionExpression | PrimaryExpression ) ( MemberExpressionPart)* )
-    ///                    | AllocationExpression
-    /// CallExpression ::= MemberExpression Arguments ( CallExpressionPart )*
-    ///
-    /// LeftHandSideExpression ::= CallExpression | MemberExpression
-    fn left_hand_side_expression(&mut self) -> Option<Rc<Node>> {
+    fn primary_expression(&mut self) -> Option<Rc<Node>> {
         let t = match self.t.next() {
             Some(token) => token,
             None => return None,
         };
 
         match t {
-            // member expression
+            Token::Identifier(value) => Node::new_identifier(value),
+            // Literal
             Token::Number(value) => Node::new_numeric_literal(value),
             Token::StringLiteral(value) => Node::new_string_literal(value),
-            Token::Identifier(value) => {
-                let ident = Node::new_identifier(value);
-
-                // call expression
-                let t = match self.t.peek() {
-                    Some(token) => token,
-                    None => return None,
-                };
-                match t {
-                    Token::Punctuator(c) => {
-                        if c == '(' {
-                            return Node::new_call_expression(ident, self.arguments());
-                        }
-                    }
-                    _ => {}
-                }
-
-                ident
-            }
-            _ => unimplemented!("token {:?} is not supported", t),
+            _ => None,
         }
     }
 
     /// MemberExpression ::= ( ( FunctionExpression | PrimaryExpression ) ( MemberExpressionPart)* )
     ///                    | AllocationExpression
+    fn member_expression(&mut self) -> Option<Rc<Node>> {
+        self.primary_expression()
+    }
+
+    /// MemberExpression ::= ( ( FunctionExpression | PrimaryExpression ) ( MemberExpressionPart)* )
+    ///                    | AllocationExpression
+    /// CallExpression ::= MemberExpression Arguments ( CallExpressionPart )*
+    ///
+    /// LeftHandSideExpression ::= CallExpression | MemberExpression
+    fn left_hand_side_expression(&mut self) -> Option<Rc<Node>> {
+        let expr = self.member_expression();
+
+        let t = match self.t.peek() {
+            Some(token) => token,
+            None => return None,
+        };
+
+        match t {
+            Token::Punctuator(c) => {
+                if c == '(' {
+                    return Node::new_call_expression(expr, self.arguments());
+                }
+                if c == '.' {
+                    return Node::new_member_expression(expr, self.identifier());
+                }
+
+                return expr;
+            }
+            _ => unimplemented!("token {:?} is not supported", t),
+        }
+    }
+
     /// LeftHandSideExpression ::= CallExpression
     ///                          | MemberExpression
     /// PostfixExpression ::= LeftHandSideExpression ( PostfixOperator )?
@@ -227,7 +246,7 @@ impl JsParser {
                 '+' | '-' => {
                     // consume '+' or '-'
                     assert!(self.t.next().is_some());
-                    Node::new_binary_expr(c, left, self.left_hand_side_expression())
+                    Node::new_binary_expression(c, left, self.left_hand_side_expression())
                 }
                 // end of expression
                 ';' => {

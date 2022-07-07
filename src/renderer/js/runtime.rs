@@ -188,6 +188,10 @@ impl JsRuntime {
                     return None;
                 }
             }
+            Node::MemberExpression { object, property } => {
+                // TODO: implement
+                return None;
+            }
             Node::CallExpression { callee, arguments } => {
                 let env = Rc::new(RefCell::new(Environment::new(Some(env))));
                 let callee_value = match self.eval(&callee, env.clone()) {
