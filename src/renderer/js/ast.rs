@@ -149,7 +149,6 @@ pub struct JsParser {
     t: JsLexer,
 }
 
-#[allow(dead_code)]
 impl JsParser {
     pub fn new(t: JsLexer) -> Self {
         Self { t }
@@ -179,14 +178,36 @@ impl JsParser {
         }
     }
 
+    /// MemberExpressionPart ::= ( "[" Expression "]" ) | ( "." Identifier )
+    ///
     /// MemberExpression ::= ( ( FunctionExpression | PrimaryExpression ) ( MemberExpressionPart)* )
     ///                    | AllocationExpression
     fn member_expression(&mut self) -> Option<Rc<Node>> {
-        self.primary_expression()
+        let expr = self.primary_expression();
+
+        let t = match self.t.peek() {
+            Some(token) => token,
+            None => return None,
+        };
+
+        match t {
+            Token::Punctuator(c) => {
+                if c == '.' {
+                    // consume '.'
+                    assert!(self.t.next().is_some());
+                    return Node::new_member_expression(expr, self.identifier());
+                }
+
+                return expr;
+            }
+            _ => unimplemented!("token {:?} is not supported", t),
+        }
     }
 
     /// MemberExpression ::= ( ( FunctionExpression | PrimaryExpression ) ( MemberExpressionPart)* )
     ///                    | AllocationExpression
+    ///
+    /// Arguments ::= "(" ( ArgumentList )? ")"
     /// CallExpression ::= MemberExpression Arguments ( CallExpressionPart )*
     ///
     /// LeftHandSideExpression ::= CallExpression | MemberExpression
@@ -201,12 +222,12 @@ impl JsParser {
         match t {
             Token::Punctuator(c) => {
                 if c == '(' {
+                    // consume '('
+                    assert!(self.t.next().is_some());
                     return Node::new_call_expression(expr, self.arguments());
                 }
-                if c == '.' {
-                    return Node::new_member_expression(expr, self.identifier());
-                }
 
+                // return MemberExpression
                 return expr;
             }
             _ => unimplemented!("token {:?} is not supported", t),
@@ -384,15 +405,6 @@ impl JsParser {
     /// Arguments ::= "(" ( ArgumentList )? ")"
     fn arguments(&mut self) -> Vec<Option<Rc<Node>>> {
         let mut arguments = Vec::new();
-
-        // consume '('
-        match self.t.next() {
-            Some(t) => match t {
-                Token::Punctuator(c) => assert!(c == '('),
-                _ => unimplemented!("function should have `(` but got {:?}", t),
-            },
-            None => unimplemented!("function should have `(` but got None"),
-        }
 
         loop {
             // push identifier to `arguments` until hits ')'

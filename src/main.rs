@@ -58,7 +58,7 @@ fn handle_input(url: String) -> RenderTree {
         Err(e) => panic!("failed to get http response: {:?}", e),
     };
 
-    println!("response: {:?}", response.body());
+    println!("response:\n{:?}", response.body());
     println!("----------------------");
 
     // html
@@ -66,7 +66,7 @@ fn handle_input(url: String) -> RenderTree {
     let html_tokenizer = HtmlTokenizer::new(html);
     println!("html tokenizer done");
     let dom_root = HtmlParser::new(html_tokenizer).construct_tree();
-    println!("DOM:");
+    println!("DOM:\n");
     print_dom(&Some(dom_root.clone()), 0);
     println!("----------------------");
 
@@ -79,25 +79,27 @@ fn handle_input(url: String) -> RenderTree {
     println!("CSSOM:\n{:?}", cssom);
     println!("----------------------");
 
+    // apply css to html and create RenderTree
+    let render_tree = RenderTree::new(dom_root.clone(), &cssom);
+
+    println!("----------------------");
+    println!("Render Tree:\n");
+    print_render_object(&render_tree.root, 0);
+    println!("----------------------");
+
     // js
-    let js = get_js_content(dom_root.clone());
+    let js = get_js_content(dom_root);
     let lexer = JsLexer::new(js);
-    println!("JS lexer {:?}", lexer);
+    println!("JS lexer:\n{:?}", lexer);
+    println!("----------------------");
 
     let mut parser = JsParser::new(lexer);
     let ast = parser.parse_ast();
-    println!("JS ast {:?}", ast);
+    println!("JS ast:\n{:?}", ast);
+    println!("----------------------");
 
     let mut runtime = JsRuntime::new();
     runtime.execute(&ast);
-
-    // apply css to html and create RenderTree
-    let render_tree = RenderTree::new(dom_root, &cssom);
-
-    println!("----------------------");
-    println!("Render Tree:");
-    print_render_object(&render_tree.root, 0);
-    println!("----------------------");
 
     render_tree
 }

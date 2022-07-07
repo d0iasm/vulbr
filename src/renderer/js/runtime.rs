@@ -3,6 +3,7 @@ use crate::renderer::js::ast::Program;
 use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::ops::Add;
 use std::rc::Rc;
 use std::string::{String, ToString};
 use std::vec::Vec;
@@ -19,6 +20,19 @@ impl RuntimeValue {
             RuntimeValue::Number(value) => format!("{}", value),
             RuntimeValue::StringLiteral(value) => value.to_string(),
         }
+    }
+}
+
+impl Add<RuntimeValue> for RuntimeValue {
+    type Output = RuntimeValue;
+
+    fn add(self, rhs: RuntimeValue) -> RuntimeValue {
+        // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#sec-applystringornumericbinaryoperator
+        if let (RuntimeValue::Number(left_num), RuntimeValue::Number(right_num)) = (&self, &rhs) {
+            return RuntimeValue::Number(left_num + right_num);
+        }
+
+        return RuntimeValue::StringLiteral(self.to_string() + &rhs.to_string());
     }
 }
 
@@ -176,21 +190,24 @@ impl JsRuntime {
 
                 // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#sec-applystringornumericbinaryoperator
                 if *operator == '+' {
-                    if let (RuntimeValue::Number(left_num), RuntimeValue::Number(right_num)) =
-                        (left_value.clone(), right_value.clone())
-                    {
-                        return Some(RuntimeValue::Number(left_num + right_num));
-                    }
-                    return Some(RuntimeValue::StringLiteral(
-                        left_value.to_string() + &right_value.to_string(),
-                    ));
+                    Some(left_value + right_value)
                 } else {
                     return None;
                 }
             }
             Node::MemberExpression { object, property } => {
-                // TODO: implement
-                return None;
+                let object_value = match self.eval(&object, env.clone()) {
+                    Some(value) => value,
+                    None => return None,
+                };
+                let property_value = match self.eval(&property, env.clone()) {
+                    Some(value) => value,
+                    None => return Some(object_value),
+                };
+
+                return Some(
+                    object_value + RuntimeValue::StringLiteral(".".to_string()) + property_value,
+                );
             }
             Node::CallExpression { callee, arguments } => {
                 let env = Rc::new(RefCell::new(Environment::new(Some(env))));
@@ -198,6 +215,12 @@ impl JsRuntime {
                     Some(value) => value,
                     None => return None,
                 };
+
+                // call an embedded function
+                if callee_value == RuntimeValue::StringLiteral("console.log".to_string()) {
+                    println!("[console.log] {:?}", self.eval(&arguments[0], env.clone()));
+                    return None;
+                }
 
                 let mut new_local_variables: VariableMap = VariableMap::new();
 
