@@ -46,11 +46,10 @@ fn print_render_object(node: &Option<Rc<RefCell<RenderObject>>>, depth: usize) {
 }
 
 fn handle_input(url: String) -> RenderTree {
-    println!("handle_url: {}", url);
-
     // parse url
     let parsed_url = ParsedUrl::new(url.to_string());
     println!("parsed_url: {:?}", parsed_url);
+    println!("----------------------");
 
     // send a HTTP request and get a response
     let client = HttpClient::new();
@@ -60,6 +59,7 @@ fn handle_input(url: String) -> RenderTree {
     };
 
     println!("response: {:?}", response.body());
+    println!("----------------------");
 
     // html
     let html = response.body();
@@ -79,7 +79,6 @@ fn handle_input(url: String) -> RenderTree {
     println!("CSSOM:\n{:?}", cssom);
     println!("----------------------");
 
-    /*
     // js
     let js = get_js_content(dom_root.clone());
     let lexer = JsLexer::new(js);
@@ -91,7 +90,6 @@ fn handle_input(url: String) -> RenderTree {
 
     let mut runtime = JsRuntime::new();
     runtime.execute(&ast);
-    */
 
     // apply css to html and create RenderTree
     let render_tree = RenderTree::new(dom_root, &cssom);
