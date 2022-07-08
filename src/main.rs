@@ -8,7 +8,7 @@ use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::*;
 use crate::renderer::html::dom::*;
 use crate::renderer::html::token::*;
-use crate::renderer::js::ast::JsParser;
+use crate::renderer::js::ast::{JsParser, Program};
 use crate::renderer::js::runtime::JsRuntime;
 use crate::renderer::js::token::JsLexer;
 use crate::renderer::layout::render_tree::*;
@@ -45,10 +45,17 @@ fn print_render_object(node: &Option<Rc<RefCell<RenderObject>>>, depth: usize) {
     }
 }
 
+/// for debug
+fn print_ast(program: &Program) {
+    for node in program.body() {
+        println!("{:?}", node);
+    }
+}
+
 fn handle_input(url: String) -> RenderTree {
     // parse url
     let parsed_url = ParsedUrl::new(url.to_string());
-    println!("parsed_url: {:?}", parsed_url);
+    println!("url: {:?}", parsed_url);
     println!("----------------------");
 
     // send a HTTP request and get a response
@@ -66,7 +73,7 @@ fn handle_input(url: String) -> RenderTree {
     let html_tokenizer = HtmlTokenizer::new(html);
     println!("html tokenizer done");
     let dom_root = HtmlParser::new(html_tokenizer).construct_tree();
-    println!("DOM:\n");
+    println!("document object model (dom):\n");
     print_dom(&Some(dom_root.clone()), 0);
     println!("----------------------");
 
@@ -76,26 +83,25 @@ fn handle_input(url: String) -> RenderTree {
     let css_tokenizer = CssTokenizer::new(style);
     let cssom = CssParser::new(css_tokenizer).parse_stylesheet();
 
-    println!("CSSOM:\n{:?}", cssom);
+    println!("css object model (cssom):\n{:?}", cssom);
     println!("----------------------");
 
     // apply css to html and create RenderTree
     let render_tree = RenderTree::new(dom_root.clone(), &cssom);
 
     println!("----------------------");
-    println!("Render Tree:\n");
+    println!("render tree:\n");
     print_render_object(&render_tree.root, 0);
     println!("----------------------");
 
     // js
     let js = get_js_content(dom_root);
     let lexer = JsLexer::new(js);
-    println!("JS lexer:\n{:?}", lexer);
-    println!("----------------------");
 
     let mut parser = JsParser::new(lexer);
     let ast = parser.parse_ast();
-    println!("JS ast:\n{:?}", ast);
+    println!("javascript abstract syntax tree (ast):");
+    print_ast(&ast);
     println!("----------------------");
 
     let mut runtime = JsRuntime::new();
