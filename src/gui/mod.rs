@@ -31,11 +31,7 @@ fn should_create_new_box(kind: &NodeKind) -> bool {
     }
 }
 
-fn paint_render_object(
-    obj: &Rc<RefCell<RenderObject>>,
-    content_area: &Box,
-    window: &BrowserWindow,
-) {
+fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
     match &obj.borrow().kind() {
         NodeKind::Document => {}
         NodeKind::Element(element) => match element.kind() {
@@ -165,14 +161,10 @@ fn paint_render_object(
     }
 }
 
-fn paint_render_tree(
-    obj: &Option<Rc<RefCell<RenderObject>>>,
-    parent_content_area: &Box,
-    window: &BrowserWindow,
-) {
+fn paint_render_tree(obj: &Option<Rc<RefCell<RenderObject>>>, parent_content_area: &Box) {
     match obj {
         Some(o) => {
-            paint_render_object(o, &parent_content_area, window);
+            paint_render_object(o, &parent_content_area);
 
             if should_create_new_box(&o.borrow().kind()) {
                 let new_content_area = if o.borrow().style.display() == DisplayType::Inline {
@@ -192,11 +184,11 @@ fn paint_render_tree(
 
                 parent_content_area.append(&new_content_area);
 
-                paint_render_tree(&o.borrow().first_child(), &new_content_area, window);
-                paint_render_tree(&o.borrow().next_sibling(), parent_content_area, window);
+                paint_render_tree(&o.borrow().first_child(), &new_content_area);
+                paint_render_tree(&o.borrow().next_sibling(), parent_content_area);
             } else {
-                paint_render_tree(&o.borrow().first_child(), parent_content_area, window);
-                paint_render_tree(&o.borrow().next_sibling(), parent_content_area, window);
+                paint_render_tree(&o.borrow().first_child(), parent_content_area);
+                paint_render_tree(&o.borrow().next_sibling(), parent_content_area);
             }
         }
         None => return,
@@ -215,7 +207,7 @@ pub fn start_browser_window(handle_input: fn(String) -> RenderTree) {
             window.connect_closure("start-handle-input", false, closure_local!(move |window: BrowserWindow, url: String| {
                 println!("start-handle-input {:?}", url);
                 let render_tree = handle_input(url);
-                paint_render_tree(&render_tree.root, &window.get_content_area(), &window);
+                paint_render_tree(&render_tree.root, &window.get_content_area());
             }));
 
             window.show();

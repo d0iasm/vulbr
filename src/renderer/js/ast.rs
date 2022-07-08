@@ -297,6 +297,8 @@ impl JsParser {
         }
     }
 
+    /// ConditionalExpression ::= LogicalORExpression ( "?" AssignmentExpression ":" AssignmentExpression )?
+    ///
     /// AssignmentExpression ::= ( LeftHandSideExpression AssignmentOperator AssignmentExpression
     ///                          | ConditionalExpression )
     fn assignment_expression(&mut self) -> Option<Rc<Node>> {
@@ -324,21 +326,6 @@ impl JsParser {
         }
     }
 
-    /// LeftHandSideExpression ::= CallExpression
-    ///                          | MemberExpression
-    /// PostfixExpression ::= LeftHandSideExpression ( PostfixOperator )?
-    /// UnaryExpression ::= ( PostfixExpression | ( UnaryOperator UnaryExpression )+ )
-    /// MultiplicativeExpression ::= UnaryExpression ( MultiplicativeOperator UnaryExpression )*
-    /// AdditiveExpression ::= MultiplicativeExpression ( AdditiveOperator MultiplicativeExpression )*
-    /// ShiftExpression ::= AdditiveExpression ( ShiftOperator AdditiveExpression )*
-    /// RelationalExpression ::= ShiftExpression ( RelationalOperator ShiftExpression )*
-    /// EqualityExpression  ::= RelationalExpression ( EqualityOperator RelationalExpression )*
-    /// BitwiseANDExpression ::= EqualityExpression ( BitwiseANDOperator EqualityExpression )*
-    /// BitwiseXORExpression ::= BitwiseANDExpression ( BitwiseXOROperator BitwiseANDExpression )*
-    /// BitwiseORExpression ::= BitwiseXORExpression ( BitwiseOROperator BitwiseXORExpression )*
-    /// LogicalANDExpression ::= BitwiseORExpression ( LogicalANDOperator BitwiseORExpression )*
-    /// LogicalORExpression ::= LogicalANDExpression ( LogicalOROperator LogicalANDExpression )*
-    /// ConditionalExpression ::= LogicalORExpression ( "?" AssignmentExpression ":" AssignmentExpression )?
     /// AssignmentExpression ::= ( LeftHandSideExpression AssignmentOperator AssignmentExpression
     ///                          | ConditionalExpression )
     ///

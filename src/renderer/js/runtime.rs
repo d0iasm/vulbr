@@ -1,6 +1,6 @@
+use crate::renderer::html::dom::get_element_by_id;
 use crate::renderer::js::ast::Node;
 use crate::renderer::js::ast::Program;
-use crate::renderer::layout::render_tree::RenderTree;
 use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -9,13 +9,15 @@ use std::rc::Rc;
 use std::string::{String, ToString};
 use std::vec::Vec;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 /// https://262.ecma-international.org/13.0/#sec-ecmascript-language-types
 pub enum RuntimeValue {
     /// https://262.ecma-international.org/13.0/#sec-terms-and-definitions-number-value
     Number(u64),
     /// https://262.ecma-international.org/13.0/#sec-terms-and-definitions-string-value
     StringLiteral(String),
+
+    DomNode(Rc<RefCell<crate::renderer::html::dom::Node>>),
 }
 
 impl RuntimeValue {
@@ -23,6 +25,23 @@ impl RuntimeValue {
         match self {
             RuntimeValue::Number(value) => format!("{}", value),
             RuntimeValue::StringLiteral(value) => value.to_string(),
+            RuntimeValue::DomNode(value) => format!("{:?}", value),
+        }
+    }
+}
+
+impl PartialEq for RuntimeValue {
+    fn eq(&self, other: &Self) -> bool {
+        match self {
+            RuntimeValue::Number(v1) => match other {
+                RuntimeValue::Number(v2) => v1 == v2,
+                _ => false,
+            },
+            RuntimeValue::StringLiteral(v1) => match other {
+                RuntimeValue::StringLiteral(v2) => v1 == v2,
+                _ => false,
+            },
+            RuntimeValue::DomNode(_) => false,
         }
     }
 }
@@ -43,7 +62,7 @@ impl Add<RuntimeValue> for RuntimeValue {
 type VariableMap = HashMap<String, Option<RuntimeValue>>;
 
 /// https://262.ecma-international.org/12.0/#sec-environment-records
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct Environment {
     variables: VariableMap,
     outer: Option<Rc<RefCell<Environment>>>,
@@ -108,16 +127,16 @@ impl Function {
 
 #[derive(Debug, Clone)]
 pub struct JsRuntime {
-    render_tree: RenderTree,
+    dom_root: Option<Rc<RefCell<crate::renderer::html::dom::Node>>>,
     pub global_variables: HashMap<String, Option<RuntimeValue>>,
     pub functions: Vec<Function>,
     pub env: Rc<RefCell<Environment>>,
 }
 
 impl JsRuntime {
-    pub fn new(render_tree: RenderTree) -> Self {
+    pub fn new(dom_root: Rc<RefCell<crate::renderer::html::dom::Node>>) -> Self {
         Self {
-            render_tree,
+            dom_root: Some(dom_root),
             global_variables: HashMap::new(),
             functions: Vec::new(),
             env: Rc::new(RefCell::new(Environment::new(None))),
@@ -153,6 +172,9 @@ impl JsRuntime {
                             unimplemented!("id should be string but got {:?}", n)
                         }
                         RuntimeValue::StringLiteral(s) => s,
+                        RuntimeValue::DomNode(node) => {
+                            panic!("unexpected runtime value {:?}", node)
+                        }
                     },
                     None => return None,
                 };
@@ -215,7 +237,21 @@ impl JsRuntime {
                         Some(value) => value,
                         None => return None,
                     };
+
                     println!("AssignmentExpression {:?} = {:?}", left_value, right_value);
+
+                    match left_value {
+                        RuntimeValue::Number(n) => panic!("unexpected value {:?}", n),
+                        RuntimeValue::StringLiteral(s) => {
+                            println!("@@@@@@@@@@@@@@ assignment to string s {:?}", s);
+                        }
+                        RuntimeValue::DomNode(n) => {
+                            println!(
+                                "!!!!!!!!!!!!!!!!! assignment to dom {:?}",
+                                n.borrow_mut().first_child()
+                            );
+                        }
+                    }
                 }
                 return None;
             }
@@ -242,17 +278,31 @@ impl JsRuntime {
 
                 // call an embedded function
                 if callee_value == RuntimeValue::StringLiteral("console.log".to_string()) {
-                    println!("[console.log] {:?}", self.eval(&arguments[0], env.clone()));
+                    match self.eval(&arguments[0], env.clone()) {
+                        Some(arg) => {
+                            println!("[console.log] {:?}", arg.to_string());
+                        }
+                        None => return None,
+                    }
                     return None;
                 }
                 if callee_value
                     == RuntimeValue::StringLiteral("document.getElementById".to_string())
                 {
+                    let arg = match self.eval(&arguments[0], env.clone()) {
+                        Some(a) => a,
+                        None => return None,
+                    };
+                    let target = match get_element_by_id(self.dom_root.clone(), &arg.to_string()) {
+                        Some(n) => n,
+                        None => return None,
+                    };
                     println!(
-                        "[document.getElementById] {:?}",
-                        self.eval(&arguments[0], env.clone())
+                        "[document.getElementById] {:?} {:?}",
+                        arg.to_string(),
+                        target
                     );
-                    return None;
+                    return Some(RuntimeValue::DomNode(target));
                 }
 
                 let mut new_local_variables: VariableMap = VariableMap::new();
@@ -281,6 +331,9 @@ impl JsRuntime {
                                 unimplemented!("id should be string but got {:?}", n)
                             }
                             RuntimeValue::StringLiteral(s) => s,
+                            RuntimeValue::DomNode(_) => {
+                                panic!("unexpected runtime value {:?}", value)
+                            }
                         },
                         None => return None,
                     };

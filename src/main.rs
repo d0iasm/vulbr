@@ -14,8 +14,6 @@ use crate::renderer::js::token::JsLexer;
 use crate::renderer::layout::render_tree::*;
 use crate::url::ParsedUrl;
 use core::cell::RefCell;
-//use gdk4::Display;
-//use gtk4::{CssProvider, StyleContext};
 use std::rc::Rc;
 use std::string::String;
 
@@ -91,7 +89,7 @@ fn handle_input(url: String) -> RenderTree {
     print_render_object(&render_tree.root, 0);
 
     // js
-    let js = get_js_content(dom_root);
+    let js = get_js_content(dom_root.clone());
     let lexer = JsLexer::new(js);
 
     let mut parser = JsParser::new(lexer);
@@ -100,7 +98,7 @@ fn handle_input(url: String) -> RenderTree {
     print_ast(&ast);
 
     println!("---------- javascript runtime ----------");
-    let mut runtime = JsRuntime::new(render_tree.clone());
+    let mut runtime = JsRuntime::new(dom_root.clone());
     runtime.execute(&ast);
 
     render_tree

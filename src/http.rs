@@ -55,7 +55,7 @@ impl HttpClient {
     }
 
     // TODO: support correctly
-    pub fn post(&self, url: &ParsedUrl, body: String) -> std::io::Result<HttpResponse> {
+    pub fn _post(&self, url: &ParsedUrl, _body: String) -> std::io::Result<HttpResponse> {
         let ips: Vec<std::net::IpAddr> = lookup_host(&url.host)?;
 
         let mut stream = TcpStream::connect((ips[0], url.port))?;
@@ -87,11 +87,11 @@ impl HttpClient {
 
 #[derive(Debug)]
 pub struct HttpResponse {
-    version: String,
-    status_code: u32,
-    reason: String,
+    _version: String,
+    _status_code: u32,
+    _reason: String,
     // TODO: replace String with Vec<Header>.
-    headers: String,
+    _headers: String,
     body: String,
 }
 
@@ -112,13 +112,13 @@ impl HttpResponse {
         let statuses: Vec<&str> = status_line.split(" ").collect();
 
         Self {
-            version: statuses[0].to_string(),
-            status_code: match statuses[1].parse() {
+            _version: statuses[0].to_string(),
+            _status_code: match statuses[1].parse() {
                 Ok(s) => s,
                 Err(_) => 404,
             },
-            reason: statuses[2].to_string(),
-            headers: headers.to_string(),
+            _reason: statuses[2].to_string(),
+            _headers: headers.to_string(),
             body: body.to_string(),
         }
     }

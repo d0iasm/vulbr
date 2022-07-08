@@ -29,7 +29,7 @@ impl Protocol {
 
 #[derive(Debug)]
 pub struct ParsedUrl {
-    scheme: Protocol,
+    _scheme: Protocol,
     pub host: String,
     pub port: u16,
     pub path: String,
@@ -104,7 +104,7 @@ impl ParsedUrl {
         };
 
         Self {
-            scheme,
+            _scheme: scheme,
             host,
             port,
             path,

@@ -747,6 +747,38 @@ impl HtmlParser {
     }
 }
 
+pub fn get_element_by_id(
+    node: Option<Rc<RefCell<Node>>>,
+    id_name: &String,
+) -> Option<Rc<RefCell<Node>>> {
+    match node {
+        Some(n) => {
+            match n.borrow().kind() {
+                NodeKind::Element(e) => {
+                    for attr in &e.attributes() {
+                        if attr.name == "id" && attr.value == *id_name {
+                            return Some(n.clone());
+                        }
+                    }
+                }
+                _ => {}
+            }
+
+            let result1 = get_element_by_id(n.borrow().first_child(), id_name);
+            let result2 = get_element_by_id(n.borrow().next_sibling(), id_name);
+            if result1.is_none() && result2.is_none() {
+                return None;
+            }
+            if result1.is_none() {
+                return result2;
+            }
+
+            return result1;
+        }
+        None => return None,
+    }
+}
+
 fn get_target_element_node(
     node: Option<Rc<RefCell<Node>>>,
     element_kind: ElementKind,
