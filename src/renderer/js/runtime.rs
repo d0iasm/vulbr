@@ -195,6 +195,24 @@ impl JsRuntime {
                     return None;
                 }
             }
+            Node::AssignmentExpression {
+                operator,
+                left,
+                right,
+            } => {
+                if *operator == '=' {
+                    let left_value = match self.eval(&left, env.clone()) {
+                        Some(value) => value,
+                        None => return None,
+                    };
+                    let right_value = match self.eval(&right, env.clone()) {
+                        Some(value) => value,
+                        None => return None,
+                    };
+                    println!("AssignmentExpression {:?} {:?}", left_value, right_value);
+                }
+                return None;
+            }
             Node::MemberExpression { object, property } => {
                 let object_value = match self.eval(&object, env.clone()) {
                     Some(value) => value,
@@ -259,17 +277,20 @@ impl JsRuntime {
                 self.eval(&function.body.clone(), env.clone())
             }
             Node::Identifier(name) => {
+                /*
+                // find a value from global variables
+                for (var_name, var_value) in &self.global_variables {
+                    if name == var_name && var_value.is_some() {
+                        return var_value.clone();
+                    }
+                }
+                */
+
                 match env.borrow_mut().get_variable(name.to_string()) {
                     Some(v) => Some(v),
-                    // First time to evaluate this identifier.
+                    // first time to evaluate this identifier
                     None => Some(RuntimeValue::StringLiteral(name.to_string())),
                 }
-                // Find a value from global variables.
-                //for (var_name, var_value) in &self.global_variables {
-                //if name == var_name && var_value.is_some() {
-                //return var_value.clone();
-                //}
-                //}
             }
             Node::NumericLiteral(value) => Some(RuntimeValue::Number(*value)),
             Node::StringLiteral(value) => Some(RuntimeValue::StringLiteral(value.to_string())),

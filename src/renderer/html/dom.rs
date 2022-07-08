@@ -542,6 +542,11 @@ impl HtmlParser {
                             self_closing: _,
                             ref attributes,
                         }) => {
+                            // "Process the token using the rules for the "in head" insertion mode."
+                            if tag == "script" {
+                                self.mode = InsertionMode::InHead;
+                                continue;
+                            }
                             if tag == "ul" {
                                 self.insert_element(tag, attributes.to_vec());
                                 token = self.t.next();

@@ -53,6 +53,12 @@ pub enum Node {
         left: Option<Rc<Node>>,
         right: Option<Rc<Node>>,
     },
+    /// https://github.com/estree/estree/blob/master/es5.md#assignmentexpression
+    AssignmentExpression {
+        operator: char,
+        left: Option<Rc<Node>>,
+        right: Option<Rc<Node>>,
+    },
     /// https://github.com/estree/estree/blob/master/es5.md#memberexpression
     MemberExpression {
         object: Option<Rc<Node>>,
@@ -81,6 +87,18 @@ impl Node {
         right: Option<Rc<Node>>,
     ) -> Option<Rc<Self>> {
         Some(Rc::new(Node::BinaryExpression {
+            operator,
+            left,
+            right,
+        }))
+    }
+
+    pub fn new_assignment_expression(
+        operator: char,
+        left: Option<Rc<Node>>,
+        right: Option<Rc<Node>>,
+    ) -> Option<Rc<Self>> {
+        Some(Rc::new(Node::AssignmentExpression {
             operator,
             left,
             right,
@@ -187,7 +205,7 @@ impl JsParser {
 
         let t = match self.t.peek() {
             Some(token) => token,
-            None => return None,
+            None => return expr,
         };
 
         match t {
@@ -198,9 +216,9 @@ impl JsParser {
                     return Node::new_member_expression(expr, self.identifier());
                 }
 
-                return expr;
+                expr
             }
-            _ => unimplemented!("token {:?} is not supported", t),
+            _ => expr,
         }
     }
 
@@ -216,7 +234,7 @@ impl JsParser {
 
         let t = match self.t.peek() {
             Some(token) => token,
-            None => return None,
+            None => return expr,
         };
 
         match t {
@@ -228,9 +246,81 @@ impl JsParser {
                 }
 
                 // return MemberExpression
-                return expr;
+                expr
             }
-            _ => unimplemented!("token {:?} is not supported", t),
+            _ => expr,
+        }
+    }
+
+    /// PostfixExpression ::= LeftHandSideExpression ( PostfixOperator )?
+    /// UnaryExpression ::= ( PostfixExpression | ( UnaryOperator UnaryExpression )+ )
+    /// MultiplicativeExpression ::= UnaryExpression ( MultiplicativeOperator UnaryExpression )*
+    /// AdditiveExpression ::= MultiplicativeExpression ( AdditiveOperator MultiplicativeExpression )*
+    /// ShiftExpression ::= AdditiveExpression ( ShiftOperator AdditiveExpression )*
+    /// RelationalExpression ::= ShiftExpression ( RelationalOperator ShiftExpression )*
+    /// EqualityExpression  ::= RelationalExpression ( EqualityOperator RelationalExpression )*
+    /// BitwiseANDExpression ::= EqualityExpression ( BitwiseANDOperator EqualityExpression )*
+    /// BitwiseXORExpression ::= BitwiseANDExpression ( BitwiseXOROperator BitwiseANDExpression )*
+    /// BitwiseORExpression ::= BitwiseXORExpression ( BitwiseOROperator BitwiseXORExpression )*
+    /// LogicalANDExpression ::= BitwiseORExpression ( LogicalANDOperator BitwiseORExpression )*
+    /// LogicalORExpression ::= LogicalANDExpression ( LogicalOROperator LogicalANDExpression )*
+    ///
+    /// ConditionalExpression ::= LogicalORExpression ( "?" AssignmentExpression ":" AssignmentExpression )?
+    fn conditional_expression(&mut self) -> Option<Rc<Node>> {
+        let left = self.left_hand_side_expression();
+
+        let t = match self.t.peek() {
+            Some(token) => token,
+            None => return left,
+        };
+
+        // TODO: support MultiplicativeExpression ('*' and '/')
+        match t {
+            Token::Punctuator(c) => match c {
+                // AdditiveExpression
+                '+' | '-' => {
+                    // consume '+' or '-'
+                    assert!(self.t.next().is_some());
+                    Node::new_binary_expression(c, left, self.left_hand_side_expression())
+                }
+                // end of expression
+                ';' => {
+                    // consume ';'
+                    assert!(self.t.next().is_some());
+                    left
+                }
+                // end of expression wihtout consuming next token
+                ',' | ')' => left,
+                _ => left,
+            },
+            _ => left,
+        }
+    }
+
+    /// AssignmentExpression ::= ( LeftHandSideExpression AssignmentOperator AssignmentExpression
+    ///                          | ConditionalExpression )
+    fn assignment_expression(&mut self) -> Option<Rc<Node>> {
+        let expr = self.conditional_expression();
+
+        let t = match self.t.peek() {
+            Some(token) => token,
+            None => return expr,
+        };
+
+        match t {
+            Token::Punctuator(c) => match c {
+                '=' => {
+                    // consume '='
+                    assert!(self.t.next().is_some());
+                    return Node::new_assignment_expression(
+                        '=',
+                        expr,
+                        self.assignment_expression(),
+                    );
+                }
+                _ => expr,
+            },
+            _ => expr,
         }
     }
 
@@ -254,32 +344,25 @@ impl JsParser {
     ///
     /// Expression ::= AssignmentExpression ( "," AssignmentExpression )*
     fn expression(&mut self) -> Option<Rc<Node>> {
-        let left = self.left_hand_side_expression();
+        let expr = self.assignment_expression();
 
         let t = match self.t.peek() {
             Some(token) => token,
-            None => return None,
+            None => return expr,
         };
 
         match t {
             Token::Punctuator(c) => match c {
-                // AdditiveOperator
-                '+' | '-' => {
-                    // consume '+' or '-'
+                ',' => {
+                    // consume ','
                     assert!(self.t.next().is_some());
-                    Node::new_binary_expression(c, left, self.left_hand_side_expression())
+                    // TODO: how to hold multiple expressions?
+                    // currently, an old expr is overriden by a new one
+                    self.expression()
                 }
-                // end of expression
-                ';' => {
-                    // consume ';'
-                    assert!(self.t.next().is_some());
-                    left
-                }
-                // end of expression wihtout consuming next token
-                ',' | ')' => left,
-                _ => unimplemented!("`Punctuator` token with {} is not supported", c),
+                _ => expr,
             },
-            _ => None,
+            _ => expr,
         }
     }
 
@@ -338,6 +421,7 @@ impl JsParser {
             Some(t) => t,
             None => return None,
         };
+        println!("statement: {:?}", t);
 
         let node = match t {
             Token::Keyword(keyword) => {

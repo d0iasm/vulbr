@@ -165,7 +165,7 @@ impl JsLexer {
             '0'..='9' => Token::Number(self.consume_number()),
             // https://262.ecma-international.org/12.0/#prod-IdentifierStart
             'a'..='z' | 'A'..='Z' | '_' | '$' => Token::Identifier(self.consume_identifier()),
-            _ => unimplemented!("char {} is not supported yet", c),
+            _ => unimplemented!("char {:?} is not supported yet", c),
         };
 
         Some(token)
