@@ -5,7 +5,6 @@ use std::vec::Vec;
 
 static RESERVED_WORDS: [&str; 3] = ["var", "function", "return"];
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token {
     /// https://262.ecma-international.org/12.0/#sec-identifier-names
@@ -26,7 +25,6 @@ pub struct JsLexer {
     input: Vec<char>,
 }
 
-#[allow(dead_code)]
 impl JsLexer {
     pub fn new(js: String) -> Self {
         Self {

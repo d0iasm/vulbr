@@ -55,8 +55,8 @@ fn print_ast(program: &Program) {
 fn handle_input(url: String) -> RenderTree {
     // parse url
     let parsed_url = ParsedUrl::new(url.to_string());
-    println!("url: {:?}", parsed_url);
-    println!("----------------------");
+    println!("---------- input url ----------");
+    println!("{:?}", parsed_url);
 
     // send a HTTP request and get a response
     let client = HttpClient::new();
@@ -65,17 +65,15 @@ fn handle_input(url: String) -> RenderTree {
         Err(e) => panic!("failed to get http response: {:?}", e),
     };
 
-    println!("response:\n{:?}", response.body());
-    println!("----------------------");
+    println!("---------- http response ----------");
+    println!("{:?}", response.body());
 
     // html
     let html = response.body();
     let html_tokenizer = HtmlTokenizer::new(html);
-    println!("html tokenizer done");
     let dom_root = HtmlParser::new(html_tokenizer).construct_tree();
-    println!("document object model (dom):");
+    println!("---------- document object model (dom) ----------");
     print_dom(&Some(dom_root.clone()), 0);
-    println!("----------------------");
 
     // css
     let style = get_style_content(dom_root.clone());
@@ -83,16 +81,14 @@ fn handle_input(url: String) -> RenderTree {
     let css_tokenizer = CssTokenizer::new(style);
     let cssom = CssParser::new(css_tokenizer).parse_stylesheet();
 
-    println!("css object model (cssom):\n{:?}", cssom);
-    println!("----------------------");
+    println!("---------- css object model (cssom) ----------");
+    println!("{:?}", cssom);
 
     // apply css to html and create RenderTree
     let render_tree = RenderTree::new(dom_root.clone(), &cssom);
 
-    println!("----------------------");
-    println!("render tree:\n");
+    println!("---------- render tree ----------");
     print_render_object(&render_tree.root, 0);
-    println!("----------------------");
 
     // js
     let js = get_js_content(dom_root);
@@ -100,11 +96,11 @@ fn handle_input(url: String) -> RenderTree {
 
     let mut parser = JsParser::new(lexer);
     let ast = parser.parse_ast();
-    println!("javascript abstract syntax tree (ast):");
+    println!("---------- javascript abstract syntax tree (ast) ----------");
     print_ast(&ast);
-    println!("----------------------");
 
-    let mut runtime = JsRuntime::new();
+    println!("---------- javascript runtime ----------");
+    let mut runtime = JsRuntime::new(render_tree.clone());
     runtime.execute(&ast);
 
     render_tree

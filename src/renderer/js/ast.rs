@@ -421,7 +421,6 @@ impl JsParser {
             Some(t) => t,
             None => return None,
         };
-        println!("statement: {:?}", t);
 
         let node = match t {
             Token::Keyword(keyword) => {

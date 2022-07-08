@@ -1,5 +1,6 @@
 use crate::renderer::js::ast::Node;
 use crate::renderer::js::ast::Program;
+use crate::renderer::layout::render_tree::RenderTree;
 use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -9,8 +10,11 @@ use std::string::{String, ToString};
 use std::vec::Vec;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// https://262.ecma-international.org/13.0/#sec-ecmascript-language-types
 pub enum RuntimeValue {
+    /// https://262.ecma-international.org/13.0/#sec-terms-and-definitions-number-value
     Number(u64),
+    /// https://262.ecma-international.org/13.0/#sec-terms-and-definitions-string-value
     StringLiteral(String),
 }
 
@@ -102,16 +106,18 @@ impl Function {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct JsRuntime {
+    render_tree: RenderTree,
     pub global_variables: HashMap<String, Option<RuntimeValue>>,
     pub functions: Vec<Function>,
     pub env: Rc<RefCell<Environment>>,
 }
 
 impl JsRuntime {
-    pub fn new() -> Self {
+    pub fn new(render_tree: RenderTree) -> Self {
         Self {
+            render_tree,
             global_variables: HashMap::new(),
             functions: Vec::new(),
             env: Rc::new(RefCell::new(Environment::new(None))),
@@ -209,7 +215,7 @@ impl JsRuntime {
                         Some(value) => value,
                         None => return None,
                     };
-                    println!("AssignmentExpression {:?} {:?}", left_value, right_value);
+                    println!("AssignmentExpression {:?} = {:?}", left_value, right_value);
                 }
                 return None;
             }
@@ -237,6 +243,15 @@ impl JsRuntime {
                 // call an embedded function
                 if callee_value == RuntimeValue::StringLiteral("console.log".to_string()) {
                     println!("[console.log] {:?}", self.eval(&arguments[0], env.clone()));
+                    return None;
+                }
+                if callee_value
+                    == RuntimeValue::StringLiteral("document.getElementById".to_string())
+                {
+                    println!(
+                        "[document.getElementById] {:?}",
+                        self.eval(&arguments[0], env.clone())
+                    );
                     return None;
                 }
 
