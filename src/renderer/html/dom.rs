@@ -3,7 +3,7 @@
 
 use crate::renderer::html::attribute::Attribute;
 use crate::renderer::html::token::{HtmlToken, HtmlTokenizer};
-use core::cell::RefCell;
+use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 use std::string::String;
 use std::string::ToString;

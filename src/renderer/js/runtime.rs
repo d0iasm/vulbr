@@ -1,7 +1,6 @@
 use crate::renderer::html::dom::get_element_by_id;
 use crate::renderer::js::ast::Node;
 use crate::renderer::js::ast::Program;
-use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ops::Add;
@@ -13,11 +12,13 @@ use std::vec::Vec;
 /// https://262.ecma-international.org/13.0/#sec-ecmascript-language-types
 pub enum RuntimeValue {
     /// https://262.ecma-international.org/13.0/#sec-terms-and-definitions-number-value
+    /// https://262.ecma-international.org/13.0/#sec-numeric-types
     Number(u64),
     /// https://262.ecma-international.org/13.0/#sec-terms-and-definitions-string-value
+    /// https://262.ecma-international.org/13.0/#sec-ecmascript-language-types-string-type
     StringLiteral(String),
-
-    DomNode(Rc<RefCell<crate::renderer::html::dom::Node>>),
+    /// https://262.ecma-international.org/13.0/#sec-object-type
+    Object(Rc<RefCell<crate::renderer::html::dom::Node>>),
 }
 
 impl RuntimeValue {
@@ -25,7 +26,7 @@ impl RuntimeValue {
         match self {
             RuntimeValue::Number(value) => format!("{}", value),
             RuntimeValue::StringLiteral(value) => value.to_string(),
-            RuntimeValue::DomNode(value) => format!("{:?}", value),
+            RuntimeValue::Object(value) => format!("{:?}", value.borrow().kind()),
         }
     }
 }
@@ -41,7 +42,7 @@ impl PartialEq for RuntimeValue {
                 RuntimeValue::StringLiteral(v2) => v1 == v2,
                 _ => false,
             },
-            RuntimeValue::DomNode(_) => false,
+            RuntimeValue::Object(_) => false,
         }
     }
 }
@@ -148,6 +149,8 @@ impl JsRuntime {
         node: &Option<Rc<Node>>,
         env: Rc<RefCell<Environment>>,
     ) -> Option<RuntimeValue> {
+        use std::borrow::Borrow;
+
         let node = match node {
             Some(n) => n,
             None => return None,
@@ -172,7 +175,7 @@ impl JsRuntime {
                             unimplemented!("id should be string but got {:?}", n)
                         }
                         RuntimeValue::StringLiteral(s) => s,
-                        RuntimeValue::DomNode(node) => {
+                        RuntimeValue::Object(node) => {
                             panic!("unexpected runtime value {:?}", node)
                         }
                     },
@@ -217,7 +220,7 @@ impl JsRuntime {
                 };
 
                 // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#sec-applystringornumericbinaryoperator
-                if *operator == '+' {
+                if operator == &'+' {
                     Some(left_value + right_value)
                 } else {
                     return None;
@@ -228,7 +231,7 @@ impl JsRuntime {
                 left,
                 right,
             } => {
-                if *operator == '=' {
+                if operator == &'=' {
                     let left_value = match self.eval(&left, env.clone()) {
                         Some(value) => value,
                         None => return None,
@@ -245,7 +248,7 @@ impl JsRuntime {
                         RuntimeValue::StringLiteral(s) => {
                             println!("@@@@@@@@@@@@@@ assignment to string s {:?}", s);
                         }
-                        RuntimeValue::DomNode(n) => {
+                        RuntimeValue::Object(n) => {
                             println!(
                                 "!!!!!!!!!!!!!!!!! assignment to dom {:?}",
                                 n.borrow_mut().first_child()
@@ -298,11 +301,11 @@ impl JsRuntime {
                         None => return None,
                     };
                     println!(
-                        "[document.getElementById] {:?} {:?}",
+                        "[document.getElementById] {:?}\n{:?}",
                         arg.to_string(),
                         target
                     );
-                    return Some(RuntimeValue::DomNode(target));
+                    return Some(RuntimeValue::Object(target));
                 }
 
                 let mut new_local_variables: VariableMap = VariableMap::new();
@@ -331,7 +334,7 @@ impl JsRuntime {
                                 unimplemented!("id should be string but got {:?}", n)
                             }
                             RuntimeValue::StringLiteral(s) => s,
-                            RuntimeValue::DomNode(_) => {
+                            RuntimeValue::Object(_) => {
                                 panic!("unexpected runtime value {:?}", value)
                             }
                         },
