@@ -17,8 +17,9 @@ pub enum RuntimeValue {
     /// https://262.ecma-international.org/13.0/#sec-terms-and-definitions-string-value
     /// https://262.ecma-international.org/13.0/#sec-ecmascript-language-types-string-type
     StringLiteral(String),
-    /// https://262.ecma-international.org/13.0/#sec-object-type
-    Object(Rc<RefCell<crate::renderer::html::dom::Node>>),
+    /// https://dom.spec.whatwg.org/#interface-htmlcollection
+    /// https://dom.spec.whatwg.org/#element
+    HtmlElement(Rc<RefCell<crate::renderer::html::dom::Node>>),
 }
 
 impl RuntimeValue {
@@ -26,7 +27,7 @@ impl RuntimeValue {
         match self {
             RuntimeValue::Number(value) => format!("{}", value),
             RuntimeValue::StringLiteral(value) => value.to_string(),
-            RuntimeValue::Object(value) => format!("{:?}", value.borrow().kind()),
+            RuntimeValue::HtmlElement(value) => format!("{:?}", value.borrow().kind()),
         }
     }
 }
@@ -42,7 +43,7 @@ impl PartialEq for RuntimeValue {
                 RuntimeValue::StringLiteral(v2) => v1 == v2,
                 _ => false,
             },
-            RuntimeValue::Object(_) => false,
+            RuntimeValue::HtmlElement(_) => false,
         }
     }
 }
@@ -175,7 +176,7 @@ impl JsRuntime {
                             unimplemented!("id should be string but got {:?}", n)
                         }
                         RuntimeValue::StringLiteral(s) => s,
-                        RuntimeValue::Object(node) => {
+                        RuntimeValue::HtmlElement(node) => {
                             panic!("unexpected runtime value {:?}", node)
                         }
                     },
@@ -248,7 +249,7 @@ impl JsRuntime {
                         RuntimeValue::StringLiteral(s) => {
                             println!("@@@@@@@@@@@@@@ assignment to string s {:?}", s);
                         }
-                        RuntimeValue::Object(n) => {
+                        RuntimeValue::HtmlElement(n) => {
                             println!(
                                 "!!!!!!!!!!!!!!!!! assignment to dom {:?}",
                                 n.borrow_mut().first_child()
@@ -305,7 +306,7 @@ impl JsRuntime {
                         arg.to_string(),
                         target
                     );
-                    return Some(RuntimeValue::Object(target));
+                    return Some(RuntimeValue::HtmlElement(target));
                 }
 
                 let mut new_local_variables: VariableMap = VariableMap::new();
@@ -334,7 +335,7 @@ impl JsRuntime {
                                 unimplemented!("id should be string but got {:?}", n)
                             }
                             RuntimeValue::StringLiteral(s) => s,
-                            RuntimeValue::Object(_) => {
+                            RuntimeValue::HtmlElement(_) => {
                                 panic!("unexpected runtime value {:?}", value)
                             }
                         },
