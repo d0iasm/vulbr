@@ -82,12 +82,6 @@ fn handle_input(url: String) -> RenderTree {
     println!("---------- css object model (cssom) ----------");
     println!("{:?}", cssom);
 
-    // apply css to html and create RenderTree
-    let render_tree = RenderTree::new(dom_root.clone(), &cssom);
-
-    println!("---------- render tree ----------");
-    print_render_object(&render_tree.root, 0);
-
     // js
     let js = get_js_content(dom_root.clone());
     let lexer = JsLexer::new(js);
@@ -100,6 +94,12 @@ fn handle_input(url: String) -> RenderTree {
     println!("---------- javascript runtime ----------");
     let mut runtime = JsRuntime::new(dom_root.clone());
     runtime.execute(&ast);
+
+    // apply css to html and create RenderTree
+    let render_tree = RenderTree::new(dom_root.clone(), &cssom);
+
+    println!("---------- render tree ----------");
+    print_render_object(&render_tree.root, 0);
 
     render_tree
 }

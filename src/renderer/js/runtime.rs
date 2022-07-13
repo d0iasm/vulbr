@@ -1,4 +1,6 @@
 use crate::renderer::html::dom::get_element_by_id;
+use crate::renderer::html::dom::Node as DomNode;
+use crate::renderer::html::dom::NodeKind as DomNodeKind;
 use crate::renderer::js::ast::Node;
 use crate::renderer::js::ast::Program;
 use std::cell::RefCell;
@@ -19,7 +21,10 @@ pub enum RuntimeValue {
     StringLiteral(String),
     /// https://dom.spec.whatwg.org/#interface-htmlcollection
     /// https://dom.spec.whatwg.org/#element
-    HtmlElement(Rc<RefCell<crate::renderer::html::dom::Node>>),
+    HtmlElement {
+        object: Rc<RefCell<DomNode>>,
+        property: Option<String>,
+    },
 }
 
 impl RuntimeValue {
@@ -27,7 +32,12 @@ impl RuntimeValue {
         match self {
             RuntimeValue::Number(value) => format!("{}", value),
             RuntimeValue::StringLiteral(value) => value.to_string(),
-            RuntimeValue::HtmlElement(value) => format!("{:?}", value.borrow().kind()),
+            RuntimeValue::HtmlElement {
+                object,
+                property: _,
+            } => {
+                format!("{:?}", object.borrow().kind())
+            }
         }
     }
 }
@@ -43,7 +53,10 @@ impl PartialEq for RuntimeValue {
                 RuntimeValue::StringLiteral(v2) => v1 == v2,
                 _ => false,
             },
-            RuntimeValue::HtmlElement(_) => false,
+            RuntimeValue::HtmlElement {
+                object: _,
+                property: _,
+            } => false,
         }
     }
 }
@@ -129,14 +142,14 @@ impl Function {
 
 #[derive(Debug, Clone)]
 pub struct JsRuntime {
-    dom_root: Option<Rc<RefCell<crate::renderer::html::dom::Node>>>,
+    dom_root: Option<Rc<RefCell<DomNode>>>,
     pub global_variables: HashMap<String, Option<RuntimeValue>>,
     pub functions: Vec<Function>,
     pub env: Rc<RefCell<Environment>>,
 }
 
 impl JsRuntime {
-    pub fn new(dom_root: Rc<RefCell<crate::renderer::html::dom::Node>>) -> Self {
+    pub fn new(dom_root: Rc<RefCell<DomNode>>) -> Self {
         Self {
             dom_root: Some(dom_root),
             global_variables: HashMap::new(),
@@ -176,7 +189,10 @@ impl JsRuntime {
                             unimplemented!("id should be string but got {:?}", n)
                         }
                         RuntimeValue::StringLiteral(s) => s,
-                        RuntimeValue::HtmlElement(node) => {
+                        RuntimeValue::HtmlElement {
+                            object: node,
+                            property: _,
+                        } => {
                             panic!("unexpected runtime value {:?}", node)
                         }
                     },
@@ -247,13 +263,20 @@ impl JsRuntime {
                     match left_value {
                         RuntimeValue::Number(n) => panic!("unexpected value {:?}", n),
                         RuntimeValue::StringLiteral(s) => {
+                            // TODO: update variable
                             println!("@@@@@@@@@@@@@@ assignment to string s {:?}", s);
                         }
-                        RuntimeValue::HtmlElement(n) => {
-                            println!(
-                                "!!!!!!!!!!!!!!!!! assignment to dom {:?}",
-                                n.borrow_mut().first_child()
-                            );
+                        RuntimeValue::HtmlElement { object, property } => {
+                            if let Some(p) = property {
+                                // document.getElementById("target").innerHTML = "foobar";
+                                if p == "innerHTML" {
+                                    object.borrow_mut().update_first_child(Some(Rc::new(
+                                        RefCell::new(DomNode::new(DomNodeKind::Text(
+                                            right_value.to_string(),
+                                        ))),
+                                    )));
+                                }
+                            }
                         }
                     }
                 }
@@ -266,12 +289,30 @@ impl JsRuntime {
                 };
                 let property_value = match self.eval(&property, env.clone()) {
                     Some(value) => value,
+                    // return RuntimeValue in `object` because of no `property`
                     None => return Some(object_value),
                 };
 
-                return Some(
-                    object_value + RuntimeValue::StringLiteral(".".to_string()) + property_value,
-                );
+                match object_value {
+                    // return html element for DOM manipulation
+                    RuntimeValue::HtmlElement { object, property } => {
+                        assert!(property.is_none());
+
+                        // set `property` to the HtmlElement value.
+                        return Some(RuntimeValue::HtmlElement {
+                            object,
+                            property: Some(property_value.to_string()),
+                        });
+                    }
+                    _ => {
+                        // return a concatenated string such as "console.log"
+                        return Some(
+                            object_value
+                                + RuntimeValue::StringLiteral(".".to_string())
+                                + property_value,
+                        );
+                    }
+                }
             }
             Node::CallExpression { callee, arguments } => {
                 let env = Rc::new(RefCell::new(Environment::new(Some(env))));
@@ -306,7 +347,10 @@ impl JsRuntime {
                         arg.to_string(),
                         target
                     );
-                    return Some(RuntimeValue::HtmlElement(target));
+                    return Some(RuntimeValue::HtmlElement {
+                        object: target,
+                        property: None,
+                    });
                 }
 
                 let mut new_local_variables: VariableMap = VariableMap::new();
@@ -335,8 +379,11 @@ impl JsRuntime {
                                 unimplemented!("id should be string but got {:?}", n)
                             }
                             RuntimeValue::StringLiteral(s) => s,
-                            RuntimeValue::HtmlElement(_) => {
-                                panic!("unexpected runtime value {:?}", value)
+                            RuntimeValue::HtmlElement {
+                                object,
+                                property: _,
+                            } => {
+                                panic!("unexpected runtime value {:?}", object)
                             }
                         },
                         None => return None,

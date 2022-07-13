@@ -37,6 +37,10 @@ impl Node {
         self.kind.clone()
     }
 
+    pub fn update_first_child(&mut self, first_child: Option<Rc<RefCell<Node>>>) {
+        self.first_child = first_child;
+    }
+
     pub fn first_child(&self) -> Option<Rc<RefCell<Node>>> {
         self.first_child.as_ref().map(|n| n.clone())
     }
