@@ -59,7 +59,11 @@ fn handle_input(url: String) -> RenderTree {
     // send a HTTP request and get a response
     let client = HttpClient::new();
     let response = match client.get(&parsed_url) {
-        Ok(res) => res,
+        Ok(res) => {
+            // TODO: work/4-3.py
+            println!("status code in HttpResponse: {:?}", res.status_code());
+            res
+        }
         Err(e) => panic!("failed to get http response: {:?}", e),
     };
 

@@ -15,3 +15,22 @@ $ cargo run
 
 - Rust toolchain (https://www.rust-lang.org/tools/install)
 - GTK4
+
+## Works
+
+Basically, you need to start a HTTP server and access to `localhost/work/`.
+
+```
+$ python3 -m http.server 8888
+```
+
+and access to `http://localhost:8888/work/1-1.html` in VulBr.
+
+
+### Work4
+
+```
+$ python3 work/4-3.py
+```
+
+and access to `http://localhost:8888/work/4-3.py` in VulBr.

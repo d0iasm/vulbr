@@ -27,9 +27,10 @@ impl HttpClient {
     }
 
     pub fn get(&self, url: &ParsedUrl) -> std::io::Result<HttpResponse> {
-        let ips: Vec<std::net::IpAddr> = lookup_host(&url.host)?;
+        let ips = lookup_host(&url.host)?.into_iter();
+        let ipv4s: Vec<std::net::IpAddr> = ips.filter(|ip| ip.is_ipv4()).collect();
 
-        let mut stream = TcpStream::connect((ips[0], url.port))?;
+        let mut stream = TcpStream::connect((ipv4s[0], url.port))?;
 
         let mut request = String::from("GET /");
         request.push_str(&url.path);
@@ -88,7 +89,7 @@ impl HttpClient {
 #[derive(Debug)]
 pub struct HttpResponse {
     _version: String,
-    _status_code: u32,
+    status_code: u32,
     _reason: String,
     // TODO: replace String with Vec<Header>.
     _headers: String,
@@ -113,7 +114,7 @@ impl HttpResponse {
 
         Self {
             _version: statuses[0].to_string(),
-            _status_code: match statuses[1].parse() {
+            status_code: match statuses[1].parse() {
                 Ok(s) => s,
                 Err(_) => 404,
             },
@@ -121,6 +122,10 @@ impl HttpResponse {
             _headers: headers.to_string(),
             body: body.to_string(),
         }
+    }
+
+    pub fn status_code(&self) -> u32 {
+        self.status_code
     }
 
     pub fn body(&self) -> String {
