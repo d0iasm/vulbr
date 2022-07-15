@@ -4,3 +4,14 @@
 
 事前学習に関するドキュメントはこちら:
 https://docs.google.com/document/d/1xTBsYRKmi4BR6ZiY1d7QbrKf3rgUKTcl0Prx8MSyvhU/edit?usp=sharing
+
+## How to run
+
+```
+$ cargo run
+```
+
+## Requirements
+
+- Rust toolchain (https://www.rust-lang.org/tools/install)
+- GTK4
