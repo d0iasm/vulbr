@@ -22,6 +22,7 @@ fn should_create_new_box(kind: &NodeKind) -> bool {
             | ElementKind::Style
             | ElementKind::Script
             | ElementKind::H1
+            | ElementKind::H2
             | ElementKind::P => false,
             // TODO: correct?
             ElementKind::Li | ElementKind::Ul => true,
@@ -40,6 +41,7 @@ fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             | ElementKind::Style
             | ElementKind::Script
             | ElementKind::H1
+            | ElementKind::H2
             | ElementKind::P
             | ElementKind::Body => {}
             ElementKind::Li => {
