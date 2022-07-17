@@ -44,6 +44,7 @@ impl RenderStyle {
                 | ElementKind::Ul
                 | ElementKind::Li
                 | ElementKind::H1
+                | ElementKind::H2
                 | ElementKind::P => DisplayType::Block,
                 ElementKind::Script | ElementKind::Head | ElementKind::Style => {
                     DisplayType::DisplayNone
@@ -57,7 +58,9 @@ impl RenderStyle {
     fn default_font_size(node: &Rc<RefCell<Node>>) -> Option<FontSize> {
         match &node.borrow().kind() {
             NodeKind::Element(element) => match element.kind() {
+                // ref: [CSS Fonts Module Level 4](https://www.w3.org/TR/css-fonts-4/#absolute-size-mapping)
                 ElementKind::H1 => Some(FontSize::XXLarge),
+                ElementKind::H2 => Some(FontSize::XLarge),
                 _ => None,
             },
             _ => None,
@@ -217,7 +220,7 @@ impl BoxInfo {
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum FontSize {
     Medium,
-    _XLarge,
+    XLarge,
     XXLarge,
 }
 
