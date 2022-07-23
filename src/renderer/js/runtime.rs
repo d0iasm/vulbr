@@ -268,7 +268,9 @@ impl JsRuntime {
                         }
                         RuntimeValue::HtmlElement { object, property } => {
                             if let Some(p) = property {
-                                // document.getElementById("target").innerHTML = "foobar";
+                                // this is the implementation of
+                                // `document.getElementById("target").innerHTML = "foobar";`
+                                // Currently, an assignment value should be a text like "foobar".
                                 if p == "innerHTML" {
                                     object.borrow_mut().update_first_child(Some(Rc::new(
                                         RefCell::new(DomNode::new(DomNodeKind::Text(
@@ -305,6 +307,14 @@ impl JsRuntime {
                         });
                     }
                     _ => {
+                        if object_value == RuntimeValue::StringLiteral("document".to_string()) {
+                            // set `property` to the HtmlElement value.
+                            return Some(RuntimeValue::HtmlElement {
+                                object: self.dom_root.clone().expect("failed to get root node"),
+                                property: Some(property_value.to_string()),
+                            });
+                        }
+
                         // return a concatenated string such as "console.log"
                         return Some(
                             object_value
