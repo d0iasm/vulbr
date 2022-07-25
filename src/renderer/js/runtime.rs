@@ -158,6 +158,30 @@ impl JsRuntime {
         }
     }
 
+    /// https://developer.mozilla.org/en-US/docs/Web/API
+    ///
+    /// returns a tuple (bool, Option<RuntimeValue>)
+    ///   bool: whether or not a Web API is found
+    ///   Option<RuntimeValue>: the result of a Web API
+    fn call_web_api(
+        &mut self,
+        func: &RuntimeValue,
+        arguments: &Vec<Option<Rc<Node>>>,
+        env: Rc<RefCell<Environment>>,
+    ) -> (bool, Option<RuntimeValue>) {
+        if func == &RuntimeValue::StringLiteral("console.log".to_string()) {
+            match self.eval(&arguments[0], env.clone()) {
+                Some(arg) => {
+                    println!("[console.log] {:?}", arg.to_string());
+                    return (true, None);
+                }
+                None => return (false, None),
+            }
+        }
+
+        (false, None)
+    }
+
     fn eval(
         &mut self,
         node: &Option<Rc<Node>>,
@@ -308,6 +332,17 @@ impl JsRuntime {
                     }
                     _ => {
                         if object_value == RuntimeValue::StringLiteral("document".to_string()) {
+                            // TOOD: this is tricky. find smarter way...
+                            if property_value
+                                == RuntimeValue::StringLiteral("getElementById".to_string())
+                            {
+                                return Some(
+                                    object_value
+                                        + RuntimeValue::StringLiteral(".".to_string())
+                                        + property_value,
+                                );
+                            }
+
                             // set `property` to the HtmlElement value.
                             return Some(RuntimeValue::HtmlElement {
                                 object: self.dom_root.clone().expect("failed to get root node"),
@@ -331,7 +366,13 @@ impl JsRuntime {
                     None => return None,
                 };
 
-                // call an embedded function
+                // call a Web API
+                let web_api_result = self.call_web_api(&callee_value, arguments, env.clone());
+                if web_api_result.0 {
+                    return web_api_result.1;
+                }
+
+                /*
                 if callee_value == RuntimeValue::StringLiteral("console.log".to_string()) {
                     match self.eval(&arguments[0], env.clone()) {
                         Some(arg) => {
@@ -341,6 +382,8 @@ impl JsRuntime {
                     }
                     return None;
                 }
+                */
+
                 if callee_value
                     == RuntimeValue::StringLiteral("document.getElementById".to_string())
                 {
@@ -365,9 +408,10 @@ impl JsRuntime {
 
                 let mut new_local_variables: VariableMap = VariableMap::new();
 
-                // find a function
+                // find a function defined in the JS code
                 let function = {
                     let mut f: Option<Function> = None;
+
                     for func in &self.functions {
                         if callee_value == RuntimeValue::StringLiteral(func.id.to_string()) {
                             f = Some(func.clone());
