@@ -27,8 +27,11 @@ impl HttpClient {
     }
 
     pub fn get(&self, url: &ParsedUrl) -> std::io::Result<HttpResponse> {
+        println!("get");
         let ips = lookup_host(&url.host)?.into_iter();
+        println!("ips {:?}", ips);
         let ipv4s: Vec<std::net::IpAddr> = ips.filter(|ip| ip.is_ipv4()).collect();
+        println!("ipv4s {:?}", ipv4s);
 
         let mut stream = TcpStream::connect((ipv4s[0], url.port))?;
 

@@ -96,7 +96,7 @@ fn handle_input(url: String) -> RenderTree {
     print_ast(&ast);
 
     println!("---------- javascript runtime ----------");
-    let mut runtime = JsRuntime::new(dom_root.clone());
+    let mut runtime = JsRuntime::new(dom_root.clone(), url);
     runtime.execute(&ast);
 
     // apply css to html and create RenderTree
