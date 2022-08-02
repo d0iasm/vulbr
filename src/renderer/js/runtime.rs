@@ -143,6 +143,7 @@ impl Function {
 #[derive(Debug, Clone)]
 pub struct JsRuntime {
     dom_root: Option<Rc<RefCell<DomNode>>>,
+    dom_modified: bool,
     url: String,
     pub global_variables: HashMap<String, Option<RuntimeValue>>,
     pub functions: Vec<Function>,
@@ -153,11 +154,16 @@ impl JsRuntime {
     pub fn new(dom_root: Rc<RefCell<DomNode>>, url: String) -> Self {
         Self {
             dom_root: Some(dom_root),
+            dom_modified: false,
             url,
             global_variables: HashMap::new(),
             functions: Vec::new(),
             env: Rc::new(RefCell::new(Environment::new(None))),
         }
+    }
+
+    pub fn dom_modified(&self) -> bool {
+        self.dom_modified
     }
 
     /// https://developer.mozilla.org/en-US/docs/Web/API
@@ -317,9 +323,8 @@ impl JsRuntime {
 
                     match left_value {
                         RuntimeValue::Number(n) => panic!("unexpected value {:?}", n),
-                        RuntimeValue::StringLiteral(s) => {
-                            // TODO: update variable
-                            println!("@@@@@@@@@@@@@@ assignment to string s {:?}", s);
+                        RuntimeValue::StringLiteral(_s) => {
+                            // TODO: update variable here
                         }
                         RuntimeValue::HtmlElement { object, property } => {
                             if let Some(p) = property {
@@ -327,6 +332,7 @@ impl JsRuntime {
                                 // `document.getElementById("target").innerHTML = "foobar";`
                                 // Currently, an assignment value should be a text like "foobar".
                                 if p == "innerHTML" {
+                                    self.dom_modified = true;
                                     object.borrow_mut().update_first_child(Some(Rc::new(
                                         RefCell::new(DomNode::new(DomNodeKind::Text(
                                             right_value.to_string(),
