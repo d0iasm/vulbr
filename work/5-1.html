@@ -1,24 +1,22 @@
 <html>
 <head>
   <style>
-    .blue {
-      color: blue;
-    }
   </style>
-  <script type="text/javascript">
-    function cve20091413() {
-      console.log("DANGER: execute arbitrary JS code!");
-      console.log("See https://www.cvedetails.com/cve/CVE-2009-1413/");
-      document.location="http://example.com";
-    }
-
-    cve20091413();
-
-    setTimeout(cve20091413, 100);
-  </script>
 </head>
 <body>
   <h1>Hello World!</h1>
-  <p class=blue>This is a test page for JavaScript.</p>
+  <p id=target>abc</p>
+  <script type="text/javascript">
+    var target=document.getElementById("target");
+    console.log(target);
+
+    var url=location.href;
+    console.log(url);
+
+    var hash=location.hash;
+    console.log(hash);
+
+    target.innerHTML=hash;
+  </script>
 </body>
 </html>
