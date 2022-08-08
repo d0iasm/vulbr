@@ -2,7 +2,7 @@
 //! https://www.w3.org/TR/css-syntax-3/#tokenizing-and-parsing
 //!
 //! 5. Parsing
-//! https://www.w3.org/TR/css-syntax-3/#tokenization
+//! https://www.w3.org/TR/css-syntax-3/#parsing
 
 use crate::renderer::css::token::*;
 
