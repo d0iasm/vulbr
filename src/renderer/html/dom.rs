@@ -117,6 +117,8 @@ impl Element {
             ElementKind::Body
         } else if name == "h1" {
             ElementKind::H1
+        } else if name == "h2" {
+            ElementKind::H2
         } else if name == "p" {
             ElementKind::P
         } else if name == "ul" {
@@ -146,6 +148,8 @@ impl Element {
             "body".to_string()
         } else if kind == ElementKind::H1 {
             "h1".to_string()
+        } else if kind == ElementKind::H2 {
+            "h2".to_string()
         } else if kind == ElementKind::P {
             "p".to_string()
         } else if kind == ElementKind::Ul {
@@ -185,6 +189,7 @@ pub enum ElementKind {
     Body,
     /// https://html.spec.whatwg.org/multipage/sections.html#the-h1,-h2,-h3,-h4,-h5,-and-h6-elements
     H1,
+    H2,
     /// https://html.spec.whatwg.org/multipage/grouping-content.html#the-p-element
     P,
     /// https://html.spec.whatwg.org/multipage/grouping-content.html#the-ul-element
@@ -571,6 +576,11 @@ impl HtmlParser {
                                 token = self.t.next();
                                 continue;
                             }
+                            if tag == "h2" {
+                                self.insert_element(tag, attributes.to_vec());
+                                token = self.t.next();
+                                continue;
+                            }
                             if tag == "p" {
                                 self.insert_element(tag, attributes.to_vec());
                                 token = self.t.next();
@@ -627,6 +637,11 @@ impl HtmlParser {
                             if tag == "h1" {
                                 token = self.t.next();
                                 self.pop_until(ElementKind::H1);
+                                continue;
+                            }
+                            if tag == "h2" {
+                                token = self.t.next();
+                                self.pop_until(ElementKind::H2);
                                 continue;
                             }
                             if tag == "p" {

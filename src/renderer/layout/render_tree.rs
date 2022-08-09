@@ -58,6 +58,7 @@ impl RenderStyle {
         match &node.borrow().kind() {
             NodeKind::Element(element) => match element.kind() {
                 ElementKind::H1 => Some(FontSize::XXLarge),
+                ElementKind::H2 => Some(FontSize::XLarge),
                 _ => None,
             },
             _ => None,
@@ -217,7 +218,7 @@ impl BoxInfo {
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum FontSize {
     Medium,
-    _XLarge,
+    XLarge,
     XXLarge,
 }
 
