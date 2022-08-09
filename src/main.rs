@@ -99,9 +99,22 @@ fn handle_input(url: String) -> RenderTree {
     let client = HttpClient::new();
     let response = match client.get(&parsed_url) {
         Ok(res) => {
-            // TODO: work/4-3.py
             println!("status code in HttpResponse: {:?}", res.status_code());
-            res
+
+            // redirect to Location
+            if res.status_code() == 302 {
+                let parsed_redirect_url = ParsedUrl::new(res.header("Location"));
+
+                let redirect_client = HttpClient::new();
+                let redirect_res = match redirect_client.get(&parsed_redirect_url) {
+                    Ok(res) => res,
+                    Err(e) => panic!("failed to get http response: {:?}", e),
+                };
+
+                redirect_res
+            } else {
+                res
+            }
         }
         Err(e) => panic!("failed to get http response: {:?}", e),
     };

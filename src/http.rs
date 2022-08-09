@@ -6,18 +6,17 @@ use std::net::TcpStream;
 use std::string::String;
 use std::vec::Vec;
 
-/*
+#[derive(Debug, Clone)]
 struct Header {
-    key: String,
-    value: String,
+    pub name: String,
+    pub value: String,
 }
 
 impl Header {
-    fn new(key: String, value: String) -> Self {
-        Self { key, value }
+    fn new(name: String, value: String) -> Self {
+        Self { name, value }
     }
 }
-*/
 
 pub struct HttpClient {}
 
@@ -91,8 +90,7 @@ pub struct HttpResponse {
     _version: String,
     status_code: u32,
     _reason: String,
-    // TODO: replace String with Vec<Header>.
-    _headers: String,
+    headers: Vec<Header>,
     body: String,
 }
 
@@ -106,8 +104,22 @@ impl HttpResponse {
         };
 
         let (headers, body) = match remaining.split_once("\n\n") {
-            Some((h, b)) => (h, b),
-            None => ("", remaining),
+            Some((h, b)) => {
+                let mut headers = Vec::new();
+                for header in h.split("\n") {
+                    // TODO: remove a new line cleaned_header
+                    let cleaned_header = header.replace("\r", "");
+                    let splitted_header: Vec<&str> = cleaned_header.splitn(2, ":").collect();
+
+                    headers.push(Header::new(
+                        String::from(splitted_header[0]),
+                        // TODO: remove a whitespace correctly
+                        String::from(splitted_header[1].replacen(" ", "", 1)),
+                    ));
+                }
+                (headers, b)
+            }
+            None => (Vec::new(), remaining),
         };
 
         let statuses: Vec<&str> = status_line.split(" ").collect();
@@ -119,7 +131,7 @@ impl HttpResponse {
                 Err(_) => 404,
             },
             _reason: statuses[2].to_string(),
-            _headers: headers.to_string(),
+            headers,
             body: body.to_string(),
         }
     }
@@ -130,5 +142,16 @@ impl HttpResponse {
 
     pub fn body(&self) -> String {
         self.body.clone()
+    }
+
+    pub fn header(&self, name: &str) -> String {
+        for h in &self.headers {
+            if h.name == name {
+                return h.value.clone();
+            }
+        }
+
+        // TODO: return None
+        "".to_string()
     }
 }
