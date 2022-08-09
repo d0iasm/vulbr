@@ -67,7 +67,7 @@ impl Color {
         }
     }
 
-    pub fn _from_code(code: &str) -> Self {
+    pub fn from_code(code: &str) -> Self {
         if code.chars().nth(0) != Some('#') || code.len() != 7 {
             // TODO: support color code with 4 chars such as "#fff".
             panic!("invalid color code {}", code);

@@ -2,6 +2,7 @@
 //! https://www.w3.org/TR/css-layout-api-1/
 
 use crate::renderer::css::cssom::*;
+use crate::renderer::css::token::CssToken;
 use crate::renderer::html::dom::*;
 use crate::renderer::layout::color::*;
 use std::cell::RefCell;
@@ -273,13 +274,25 @@ impl RenderObject {
         for declaration in declarations {
             match declaration.property.as_str() {
                 "background-color" => {
-                    if let ComponentValue::Keyword(value) = declaration.value {
-                        self.style.background_color = Some(Color::from_name(&value));
+                    if let ComponentValue::Keyword(value) = &declaration.value {
+                        self.style.background_color = Some(Color::from_name(value));
+                    }
+
+                    if let ComponentValue::InputToken(value) = &declaration.value {
+                        if let CssToken::HashToken(color_code) = value {
+                            self.style.background_color = Some(Color::from_code(color_code));
+                        }
                     }
                 }
                 "color" => {
-                    if let ComponentValue::Keyword(value) = declaration.value {
-                        self.style.color = Some(Color::from_name(&value));
+                    if let ComponentValue::Keyword(value) = &declaration.value {
+                        self.style.color = Some(Color::from_name(value));
+                    }
+
+                    if let ComponentValue::InputToken(value) = &declaration.value {
+                        if let CssToken::HashToken(color_code) = value {
+                            self.style.color = Some(Color::from_code(color_code));
+                        }
                     }
                 }
                 "height" => {

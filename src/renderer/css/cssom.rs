@@ -144,6 +144,9 @@ pub enum ComponentValue {
     /// https://www.w3.org/TR/css-values-3/#numeric-types
     /// This is one of basic data types.
     Number(f64),
+    /// https://www.w3.org/TR/css-syntax-3/#current-input-token
+    /// The token from the list of tokens produced by the tokenizer.
+    InputToken(CssToken),
 }
 
 #[derive(Debug, Clone)]
@@ -180,16 +183,7 @@ impl CssParser {
         match token {
             CssToken::Ident(ident) => ComponentValue::Keyword(ident.to_string()),
             CssToken::Number(num) => ComponentValue::Number(num.clone()),
-            // TODO(work/2-2.html): support color code (e.g. "#ffffff")
-            _ => {
-                println!(
-                    "warning: token {:?} as a component value is not supported yet",
-                    token
-                );
-                // TODO: implement it correctly
-                return ComponentValue::Keyword("red".to_string());
-                //panic!("Parse error: {:?} is an unexpected token.", token);
-            }
+            _ => ComponentValue::InputToken(token),
         }
     }
 
@@ -243,8 +237,8 @@ impl CssParser {
         let mut declaration = Declaration::new();
         declaration.set_property(self.consume_ident());
 
-        // If the next input token is anything other than a <colon-token>, this is a parse error.
-        // Return nothing. Otherwise, consume the next input token.
+        // "2. If the next input token is anything other than a <colon-token>, this is a parse error.
+        // Return nothing. Otherwise, consume the next input token."
         match self.t.next() {
             Some(token) => match token {
                 CssToken::Colon => {}
@@ -253,8 +247,10 @@ impl CssParser {
             None => return None,
         }
 
-        // As long as the next input token is anything other than an <EOF-token>, consume a
-        // component value and append it to the declaration’s value.
+        // "3. While the next input token is a <whitespace-token>, consume the next input token."
+
+        // "4. As long as the next input token is anything other than an <EOF-token>, consume a
+        // component value and append it to the declaration’s value."
         declaration.set_value(self.consume_component_value());
 
         Some(declaration)
