@@ -43,6 +43,45 @@ fn print_render_object(node: &Option<Rc<RefCell<RenderObject>>>, depth: usize) {
     }
 }
 
+fn dom_to_html(node: &Option<Rc<RefCell<Node>>>, html: &mut String) {
+    match node {
+        Some(n) => {
+            // open tag
+            match n.borrow().kind() {
+                NodeKind::Document => {}
+                NodeKind::Element(ref e) => {
+                    html.push_str("<");
+                    html.push_str(&Element::element_kind_to_string(e.kind()));
+                    for attr in e.attributes() {
+                        html.push_str(" ");
+                        html.push_str(&attr.name);
+                        html.push_str("=");
+                        html.push_str(&attr.value);
+                    }
+                    html.push_str(">");
+                }
+                NodeKind::Text(ref s) => html.push_str(s),
+            }
+
+            dom_to_html(&n.borrow().first_child(), html);
+
+            // close tag
+            match n.borrow().kind() {
+                NodeKind::Document => {}
+                NodeKind::Element(ref e) => {
+                    html.push_str("</");
+                    html.push_str(&Element::element_kind_to_string(e.kind()));
+                    html.push_str(">");
+                }
+                NodeKind::Text(_s) => {}
+            }
+
+            dom_to_html(&n.borrow().next_sibling(), html);
+        }
+        None => return,
+    }
+}
+
 /// for debug
 fn print_ast(program: &Program) {
     for node in program.body() {
@@ -96,20 +135,32 @@ fn handle_input(url: String) -> RenderTree {
     print_ast(&ast);
 
     println!("---------- javascript runtime ----------");
-    let mut runtime = JsRuntime::new(dom_root.clone(), url);
+    let mut runtime = JsRuntime::new(dom_root.clone(), url.clone());
     runtime.execute(&ast);
+
     if runtime.dom_modified() {
-        println!("---------- document object model (dom) ----------");
-        print_dom(&Some(dom_root.clone()), 0);
+        println!("---------- modified document object model (dom) ----------");
+        let mut modified_html = String::new();
+        dom_to_html(&runtime.dom_root(), &mut modified_html);
+
+        let html_tokenizer = HtmlTokenizer::new(modified_html);
+        let modified_dom_root = HtmlParser::new(html_tokenizer).construct_tree();
+        print_dom(&Some(modified_dom_root.clone()), 0);
+
+        // apply css to html and create RenderTree
+        let render_tree = RenderTree::new(modified_dom_root.clone(), &cssom);
+        println!("---------- render tree ----------");
+        print_render_object(&render_tree.root, 0);
+
+        return render_tree;
     }
 
     // apply css to html and create RenderTree
     let render_tree = RenderTree::new(dom_root.clone(), &cssom);
-
     println!("---------- render tree ----------");
     print_render_object(&render_tree.root, 0);
 
-    render_tree
+    return render_tree;
 }
 
 fn main() {

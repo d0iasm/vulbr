@@ -2,7 +2,7 @@
 //! https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
 
 use crate::renderer::html::attribute::Attribute;
-use crate::renderer::html::token::{HtmlToken, HtmlTokenizer};
+use crate::renderer::html::token::{HtmlToken, HtmlTokenizer, State};
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 use std::string::String;
@@ -553,6 +553,11 @@ impl HtmlParser {
                         }) => {
                             // "Process the token using the rules for the "in head" insertion mode."
                             if tag == "script" {
+                                // https://html.spec.whatwg.org/multipage/parsing.html#parsing-html-fragments
+                                // "script
+                                // Switch the tokenizer to the script data state."
+                                self.t.switch_context(State::ScriptData);
+
                                 self.mode = InsertionMode::InHead;
                                 continue;
                             }

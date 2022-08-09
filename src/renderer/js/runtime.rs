@@ -162,6 +162,10 @@ impl JsRuntime {
         }
     }
 
+    pub fn dom_root(&self) -> Option<Rc<RefCell<DomNode>>> {
+        self.dom_root.clone()
+    }
+
     pub fn dom_modified(&self) -> bool {
         self.dom_modified
     }

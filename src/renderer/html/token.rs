@@ -35,6 +35,16 @@ pub enum State {
     AfterAttributeValueQuoted,
     /// https://html.spec.whatwg.org/multipage/parsing.html#self-closing-start-tag-state
     SelfClosingStartTag,
+    /// https://html.spec.whatwg.org/multipage/parsing.html#script-data-state
+    ScriptData,
+    /// https://html.spec.whatwg.org/multipage/parsing.html#script-data-less-than-sign-state
+    ScriptDataLessThanSign,
+    /// https://html.spec.whatwg.org/multipage/parsing.html#script-data-end-tag-open-state
+    ScriptDataEndTagOpen,
+    /// https://html.spec.whatwg.org/multipage/parsing.html#script-data-end-tag-name-state
+    ScriptDataEndTagName,
+    /// https://html.spec.whatwg.org/multipage/parsing.html#temporary-buffer
+    TemporaryBuffer,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -63,6 +73,7 @@ pub struct HtmlTokenizer {
     reconsume: bool,
     latest_token: Option<HtmlToken>,
     input: Vec<char>,
+    buf: String,
 }
 
 impl HtmlTokenizer {
@@ -73,6 +84,7 @@ impl HtmlTokenizer {
             reconsume: false,
             latest_token: None,
             input: html.chars().collect(),
+            buf: String::new(),
         }
     }
 
@@ -92,8 +104,6 @@ impl HtmlTokenizer {
 
     /// Creates a StartTag or EndTag token.
     fn create_tag_open(&mut self, start_tag_token: bool) {
-        assert!(self.latest_token.is_none());
-
         if start_tag_token {
             self.latest_token = Some(HtmlToken::StartTag {
                 tag: String::new(),
@@ -201,6 +211,11 @@ impl HtmlTokenizer {
     /// Returns true if the current position is larger than the length of input.
     fn is_eof(&self) -> bool {
         self.pos > self.input.len()
+    }
+
+    /// https://html.spec.whatwg.org/multipage/parsing.html#parsing-html-fragments
+    pub fn switch_context(&mut self, state: State) {
+        self.state = state;
     }
 }
 
@@ -458,6 +473,110 @@ impl Iterator for HtmlTokenizer {
                         // invalid parse error.
                         return Some(HtmlToken::Eof);
                     }
+                }
+                // https://html.spec.whatwg.org/multipage/parsing.html#script-data-state
+                State::ScriptData => {
+                    // TODO: fix this.
+                    // this is not aligned with the spec.
+                    // check the temporary buffer
+                    if c == '>' {
+                        if let Some(t) = self.latest_token.as_mut() {
+                            match t {
+                                HtmlToken::EndTag {
+                                    ref tag,
+                                    self_closing: _,
+                                } => {
+                                    if tag == "script" {
+                                        self.state = State::Data;
+                                        return self.take_latest_token();
+                                    } else {
+                                        self.latest_token = None;
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+
+                    if c == '<' {
+                        self.state = State::ScriptDataLessThanSign;
+                        continue;
+                    }
+
+                    if self.is_eof() {
+                        return Some(HtmlToken::Eof);
+                    }
+
+                    return Some(HtmlToken::Char(c));
+                }
+                // https://html.spec.whatwg.org/multipage/parsing.html#script-data-less-than-sign-state
+                State::ScriptDataLessThanSign => {
+                    if c == '/' {
+                        // "Set the temporary buffer to the empty string."
+                        self.buf = String::new();
+                        self.state = State::ScriptDataEndTagOpen;
+                        continue;
+                    }
+
+                    self.reconsume = true;
+                    self.state = State::ScriptData;
+                    return Some(HtmlToken::Char('<'));
+                }
+                // https://html.spec.whatwg.org/multipage/parsing.html#script-data-end-tag-open-state
+                State::ScriptDataEndTagOpen => {
+                    if c.is_ascii_alphabetic() {
+                        self.reconsume = true;
+                        self.state = State::ScriptDataEndTagName;
+                        self.create_tag_open(false);
+                        continue;
+                    }
+
+                    self.reconsume = true;
+                    self.state = State::ScriptData;
+                    // TODO: emit '<' and '/'
+                    // "Emit a U+003C LESS-THAN SIGN character token and a U+002F SOLIDUS character
+                    // token. Reconsume in the script data state."
+                    return Some(HtmlToken::Char('<'));
+                }
+                // https://html.spec.whatwg.org/multipage/parsing.html#script-data-end-tag-name-state
+                State::ScriptDataEndTagName => {
+                    if c == '>' {
+                        self.state = State::Data;
+                        return self.take_latest_token();
+                    }
+
+                    if c.is_ascii_alphabetic() {
+                        self.buf.push(c);
+                        self.append_tag_name(c.to_ascii_lowercase());
+                        continue;
+                    }
+
+                    // "Emit a U+003C LESS-THAN SIGN character token, a U+002F SOLIDUS character
+                    // token, and a character token for each of the characters in the temporary
+                    // buffer (in the order they were added to the buffer). Reconsume in the script
+                    // data state."
+                    self.state = State::TemporaryBuffer;
+                    self.buf = String::from("</") + &self.buf;
+                    self.buf.push(c);
+                    continue;
+                }
+                // https://html.spec.whatwg.org/multipage/parsing.html#temporary-buffer
+                State::TemporaryBuffer => {
+                    self.reconsume = true;
+
+                    if self.buf.chars().count() == 0 {
+                        self.state = State::ScriptData;
+                        continue;
+                    }
+
+                    // remove the first char
+                    let c = self
+                        .buf
+                        .chars()
+                        .nth(0)
+                        .expect("self.buf should have at least 1 char");
+                    self.buf.remove(0);
+                    return Some(HtmlToken::Char(c));
                 }
             } // end of `match self.state`
         } // end of `loop`
